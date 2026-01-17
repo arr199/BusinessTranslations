@@ -8,7 +8,7 @@ namespace businessTranslations.extensions;
 public static class UseBusinessTranslationsExtension
 {
     public static IEndpointRouteBuilder UseBusinessTranslations(
-        this IEndpointRouteBuilder app,
+        this WebApplication app,
         Action<BTConfiguration>? configureOptions = null
     )
     {

@@ -17,11 +17,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseBusinessTranslations(d =>
 {
-    d.BasePath = "aa";
+    d.BasePath = "bt";
     d.UseSql = true;
-
-
-
 });
 
 app.Run();
