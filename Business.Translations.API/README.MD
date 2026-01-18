@@ -1,6 +1,7 @@
 # TODO List
 
 - Serve files from endpoints
+- See if wwwroot is the default for serving static files removing the file provider
 - Implement interfaces for all classes to add documentation
 - Add react
 - Add unit tests
