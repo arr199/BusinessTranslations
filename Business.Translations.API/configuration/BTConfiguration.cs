@@ -4,7 +4,7 @@ namespace businessTranslations.configuration;
 
 public class BTConfiguration : IBTConfiguration
 {
-    private string _basePath = "translations";
+    private string _basePath = "bt";
 
     public string BasePath
     {
