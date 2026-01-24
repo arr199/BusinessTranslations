@@ -1,5 +1,3 @@
-import React from "react";
-
 interface FooterProps {
   currentPage: number;
   totalItems: number;
@@ -8,13 +6,13 @@ interface FooterProps {
   onItemsPerPageChange?: (items: number) => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({
+export function Footer({
   currentPage,
   totalItems,
   itemsPerPage,
   onPageChange,
   onItemsPerPageChange,
-}) => {
+}: FooterProps) {
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -69,4 +67,4 @@ export const Footer: React.FC<FooterProps> = ({
       </div>
     </footer>
   );
-};
+}

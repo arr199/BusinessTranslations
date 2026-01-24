@@ -1,24 +1,20 @@
-import React from "react";
-
 interface HeaderProps {
   title: string;
   version?: string;
   onAddLanguage?: () => void;
-  onAddModule?: () => void;
   onAddKey?: () => void;
   onToggleDarkMode?: () => void;
   isDarkMode?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({
+export function Header({
   title,
   version,
   onAddLanguage,
-  onAddModule,
   onAddKey,
   onToggleDarkMode,
   isDarkMode = false,
-}) => {
+}: HeaderProps) {
   return (
     <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-8 shrink-0">
       <div className="flex items-center gap-4">
@@ -35,25 +31,17 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-3">
         <button
           onClick={onAddLanguage}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-primary dark:hover:border-primary hover:text-primary transition-all duration-200"
         >
           <span className="material-symbols-outlined text-sm">language</span>
           Add Language
-        </button>
-
-        <button
-          onClick={onAddModule}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-        >
-          <span className="material-symbols-outlined text-sm">extension</span>
-          Add Module
         </button>
 
         <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1" />
 
         <button
           onClick={onAddKey}
-          className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-1.5 rounded-lg text-sm font-bold transition-colors shadow-sm shadow-primary/20"
+          className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-200 shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/30"
         >
           <span className="material-symbols-outlined text-sm">add</span>
           Add New Key
@@ -79,4 +67,4 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
     </header>
   );
-};
+}

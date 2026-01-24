@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Modal } from "./Modal";
 
 interface NewLanguageModalProps {
@@ -7,17 +7,17 @@ interface NewLanguageModalProps {
   onSave: (data: { code: string; name: string }) => void;
 }
 
-export const NewLanguageModal: React.FC<NewLanguageModalProps> = ({
+export function NewLanguageModal({
   isOpen,
   onClose,
   onSave,
-}) => {
+}: NewLanguageModalProps) {
   const [formData, setFormData] = useState({
     code: "",
     name: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     onSave(formData);
     setFormData({ code: "", name: "" });
@@ -80,4 +80,4 @@ export const NewLanguageModal: React.FC<NewLanguageModalProps> = ({
       </form>
     </Modal>
   );
-};
+}

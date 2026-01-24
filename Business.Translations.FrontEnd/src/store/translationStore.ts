@@ -32,10 +32,13 @@ interface TranslationStore {
   // Module actions
   fetchModules: () => Promise<void>;
   createModule: (module: Omit<Module, "id">) => Promise<void>;
+  updateModule: (id: string, module: Partial<Module>) => Promise<void>;
+  deleteModule: (id: string) => Promise<void>;
 
   // Language actions
   fetchLanguages: () => Promise<void>;
   createLanguage: (language: Language) => Promise<void>;
+  deleteLanguage: (code: string) => Promise<void>;
 
   // Filter actions
   setSearchValue: (value: string) => void;
@@ -167,6 +170,75 @@ export const useTranslationStore = create<TranslationStore>((set) => ({
     }
   },
 
+  updateModule: async (id, module) => {
+    set({ error: null });
+    try {
+      const existing = useTranslationStore
+        .getState()
+        .modules.find((m) => m.id === id);
+
+      const updated = await modulesApi.update(id, module);
+
+      set((state) => {
+        const oldName = existing?.name;
+        const newName = updated.name;
+
+        return {
+          modules: state.modules.map((m) => (m.id === id ? updated : m)),
+          translations:
+            oldName && newName && oldName !== newName
+              ? state.translations.map((t) =>
+                  t.module === oldName ? { ...t, module: newName } : t,
+                )
+              : state.translations,
+          selectedModule:
+            oldName && newName && state.selectedModule === oldName
+              ? newName
+              : state.selectedModule,
+        };
+      });
+    } catch (error) {
+      set({
+        error:
+          error instanceof Error ? error.message : "Failed to update module",
+      });
+      throw error;
+    }
+  },
+
+  deleteModule: async (id) => {
+    set({ error: null });
+    try {
+      const moduleToDelete = useTranslationStore
+        .getState()
+        .modules.find((m) => m.id === id);
+
+      await modulesApi.delete(id);
+
+      set((state) => {
+        const deletedName = moduleToDelete?.name;
+
+        return {
+          modules: state.modules.filter((m) => m.id !== id),
+          translations: deletedName
+            ? state.translations.filter((t) => t.module !== deletedName)
+            : state.translations,
+          selectedModule:
+            deletedName && state.selectedModule === deletedName
+              ? "all"
+              : state.selectedModule,
+          currentPage: 1,
+        };
+      });
+    } catch (error) {
+      set({
+        error:
+          error instanceof Error ? error.message : "Failed to delete module",
+      });
+      throw error;
+    }
+  },
+
   // Languages
   fetchLanguages: async () => {
     set({ isLoadingLanguages: true, error: null });
@@ -193,6 +265,27 @@ export const useTranslationStore = create<TranslationStore>((set) => ({
       set({
         error:
           error instanceof Error ? error.message : "Failed to create language",
+      });
+      throw error;
+    }
+  },
+
+  deleteLanguage: async (code) => {
+    set({ error: null });
+    try {
+      await languagesApi.delete(code);
+
+      set((state) => ({
+        languages: state.languages.filter((l) => l.code !== code),
+        translations: state.translations.filter((t) => t.languageCode !== code),
+        selectedLanguage:
+          state.selectedLanguage === code ? "all" : state.selectedLanguage,
+        currentPage: 1,
+      }));
+    } catch (error) {
+      set({
+        error:
+          error instanceof Error ? error.message : "Failed to delete language",
       });
       throw error;
     }

@@ -1,18 +1,22 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
+  containerClassName?: string;
+  bodyClassName?: string;
 }
 
-export const Modal: React.FC<ModalProps> = ({
+export function Modal({
   isOpen,
   onClose,
   title,
   children,
-}) => {
+  containerClassName,
+  bodyClassName,
+}: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,7 +42,9 @@ export const Modal: React.FC<ModalProps> = ({
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div
         ref={modalRef}
-        className="relative bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col"
+        className={`relative bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col ${
+          containerClassName ?? ""
+        }`}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -51,8 +57,10 @@ export const Modal: React.FC<ModalProps> = ({
             <span className="material-symbols-outlined text-xl">close</span>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto">{children}</div>
+        <div className={`flex-1 overflow-y-auto ${bodyClassName ?? ""}`}>
+          {children}
+        </div>
       </div>
     </div>
   );
-};
+}

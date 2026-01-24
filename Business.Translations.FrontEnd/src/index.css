@@ -1,8 +1,23 @@
 @import "tailwindcss";
 
+@theme {
+  /* Enable class-based dark mode */
+  --color-primary: #137fec;
+  --color-primary-dark: #0d5fbf;
+}
+
+/* Configure dark mode to use class strategy */
+@variant dark (&:is(.dark, .dark *)) {
+}
+
 body {
   font-family: "Inter", sans-serif;
   margin: 0;
+  background-color: #f8fafc;
+}
+
+body.dark {
+  background-color: #0b1219;
 }
 
 /* Ensure proper dark mode transitions */

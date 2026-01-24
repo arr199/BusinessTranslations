@@ -1,4 +1,3 @@
-import React from "react";
 import { TranslationRow } from "./TranslationRow";
 import type { Translation } from "../types";
 
@@ -8,11 +7,11 @@ interface TranslationTableProps {
   onDelete?: (id: string, key: string) => void;
 }
 
-export const TranslationTable: React.FC<TranslationTableProps> = ({
+export function TranslationTable({
   translations,
   onEdit,
   onDelete,
-}) => {
+}: TranslationTableProps) {
   return (
     <section className="flex-1 overflow-auto bg-slate-50 dark:bg-[#0b1219]">
       <table className="w-full text-left border-collapse table-fixed">
@@ -51,4 +50,4 @@ export const TranslationTable: React.FC<TranslationTableProps> = ({
       </table>
     </section>
   );
-};
+}

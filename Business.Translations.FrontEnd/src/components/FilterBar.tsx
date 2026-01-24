@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface FilterOption {
   value: string;
@@ -19,7 +19,7 @@ interface FilterBarProps {
   onFilter?: () => void;
 }
 
-export const FilterBar: React.FC<FilterBarProps> = ({
+export function FilterBar({
   searchValue = "",
   onSearchChange,
   selectedLanguage = "all",
@@ -31,7 +31,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   onExport,
   onRefresh,
   onFilter,
-}) => {
+}: FilterBarProps) {
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
   const [isModuleOpen, setIsModuleOpen] = useState(false);
   const languageRef = useRef<HTMLDivElement>(null);
@@ -206,4 +206,4 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       </div>
     </section>
   );
-};
+}

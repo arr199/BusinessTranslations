@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import type { Translation } from "../types";
 
 interface TranslationRowProps {
@@ -7,11 +7,11 @@ interface TranslationRowProps {
   onDelete?: (id: string, key: string) => void;
 }
 
-export const TranslationRow: React.FC<TranslationRowProps> = ({
+export function TranslationRow({
   translation,
   onEdit,
   onDelete,
-}) => {
+}: TranslationRowProps) {
   const [value, setValue] = useState(translation.value);
 
   const getLanguageBadgeColor = (code: string) => {
@@ -129,4 +129,4 @@ export const TranslationRow: React.FC<TranslationRowProps> = ({
       </td>
     </tr>
   );
-};
+}

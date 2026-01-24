@@ -1,4 +1,3 @@
-import React from "react";
 import { Modal } from "./Modal";
 
 interface DeleteConfirmModalProps {
@@ -6,16 +5,22 @@ interface DeleteConfirmModalProps {
   onClose: () => void;
   onConfirm: () => void;
   itemName: string;
+  title?: string;
+  prompt?: string;
+  confirmText?: string;
 }
 
-export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
+export function DeleteConfirmModal({
   isOpen,
   onClose,
   onConfirm,
   itemName,
-}) => {
+  title = "Delete Translation",
+  prompt = "Are you sure you want to delete this translation?",
+  confirmText = "Delete",
+}: DeleteConfirmModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Delete Translation">
+    <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <div className="p-6">
         <div className="flex items-start gap-4 mb-6">
           <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/20">
@@ -24,9 +29,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
             </span>
           </div>
           <div className="flex-1">
-            <p className="text-slate-700 dark:text-slate-300 mb-2">
-              Are you sure you want to delete this translation?
-            </p>
+            <p className="text-slate-700 dark:text-slate-300 mb-2">{prompt}</p>
             <code className="text-sm bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-primary">
               {itemName}
             </code>
@@ -51,10 +54,10 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
             }}
             className="px-4 py-2 rounded-lg text-sm font-bold bg-red-600 hover:bg-red-700 text-white transition-colors"
           >
-            Delete
+            {confirmText}
           </button>
         </div>
       </div>
     </Modal>
   );
-};
+}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Modal } from "./Modal";
 import { Dropdown } from "./Dropdown";
 
@@ -16,13 +16,13 @@ interface NewTranslationModalProps {
   languages: Array<{ value: string; label: string }>;
 }
 
-export const NewTranslationModal: React.FC<NewTranslationModalProps> = ({
+export function NewTranslationModal({
   isOpen,
   onClose,
   onSave,
   modules,
   languages,
-}) => {
+}: NewTranslationModalProps) {
   const [formData, setFormData] = useState({
     module: "",
     key: "",
@@ -31,7 +31,7 @@ export const NewTranslationModal: React.FC<NewTranslationModalProps> = ({
     value: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     onSave(formData);
     setFormData({
@@ -127,4 +127,4 @@ export const NewTranslationModal: React.FC<NewTranslationModalProps> = ({
       </form>
     </Modal>
   );
-};
+}

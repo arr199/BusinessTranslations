@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
  *
  * @returns [isDarkMode, toggleDarkMode]
  */
-export const useDarkMode = (): [boolean, () => void] => {
+export function useDarkMode(): [boolean, () => void] {
   // Initialize dark mode from localStorage or system preference
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     // Check localStorage first
@@ -19,8 +19,10 @@ export const useDarkMode = (): [boolean, () => void] => {
       // Apply immediately on init
       if (isDark) {
         document.documentElement.classList.add("dark");
+        document.body.classList.add("dark");
       } else {
         document.documentElement.classList.remove("dark");
+        document.body.classList.remove("dark");
       }
       return isDark;
     }
@@ -31,6 +33,7 @@ export const useDarkMode = (): [boolean, () => void] => {
     ).matches;
     if (prefersDark) {
       document.documentElement.classList.add("dark");
+      document.body.classList.add("dark");
     }
     return prefersDark;
   });
@@ -39,8 +42,10 @@ export const useDarkMode = (): [boolean, () => void] => {
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
+      document.body.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
+      document.body.classList.remove("dark");
     }
     localStorage.setItem("darkMode", String(isDarkMode));
   }, [isDarkMode]);
@@ -50,4 +55,4 @@ export const useDarkMode = (): [boolean, () => void] => {
   };
 
   return [isDarkMode, toggleDarkMode];
-};
+}

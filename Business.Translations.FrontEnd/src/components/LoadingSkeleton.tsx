@@ -1,6 +1,4 @@
-import React from "react";
-
-export const TableSkeleton: React.FC = () => {
+export function TableSkeleton() {
   return (
     <div className="flex-1 overflow-auto bg-slate-50 dark:bg-[#0b1219]">
       <table className="w-full text-left border-collapse table-fixed">
@@ -59,11 +57,9 @@ export const TableSkeleton: React.FC = () => {
       </table>
     </div>
   );
-};
+}
 
-export const LoadingSpinner: React.FC<{ size?: "sm" | "md" | "lg" }> = ({
-  size = "md",
-}) => {
+export function LoadingSpinner({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
   const sizeClasses = {
     sm: "size-4",
     md: "size-8",
@@ -77,4 +73,4 @@ export const LoadingSpinner: React.FC<{ size?: "sm" | "md" | "lg" }> = ({
       ></div>
     </div>
   );
-};
+}

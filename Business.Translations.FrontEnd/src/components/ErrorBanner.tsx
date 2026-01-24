@@ -1,14 +1,9 @@
-import React from "react";
-
 interface ErrorBannerProps {
   message: string;
   onDismiss?: () => void;
 }
 
-export const ErrorBanner: React.FC<ErrorBannerProps> = ({
-  message,
-  onDismiss,
-}) => {
+export function ErrorBanner({ message, onDismiss }: ErrorBannerProps) {
   return (
     <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 mx-8 my-3 rounded-r-lg">
       <div className="flex items-center justify-between">
@@ -29,4 +24,4 @@ export const ErrorBanner: React.FC<ErrorBannerProps> = ({
       </div>
     </div>
   );
-};
+}

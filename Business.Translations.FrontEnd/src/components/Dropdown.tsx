@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface DropdownOption {
   value: string;
@@ -12,12 +12,12 @@ interface DropdownProps {
   placeholder?: string;
 }
 
-export const Dropdown: React.FC<DropdownProps> = ({
+export function Dropdown({
   options,
   value,
   onChange,
   placeholder = "Select...",
-}) => {
+}: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -73,4 +73,4 @@ export const Dropdown: React.FC<DropdownProps> = ({
       )}
     </div>
   );
-};
+}

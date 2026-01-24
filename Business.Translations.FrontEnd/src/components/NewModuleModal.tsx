@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Modal } from "./Modal";
 
 interface NewModuleModalProps {
@@ -7,11 +7,11 @@ interface NewModuleModalProps {
   onSave: (data: { name: string; icon: string }) => void;
 }
 
-export const NewModuleModal: React.FC<NewModuleModalProps> = ({
+export function NewModuleModal({
   isOpen,
   onClose,
   onSave,
-}) => {
+}: NewModuleModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     icon: "extension",
@@ -36,7 +36,7 @@ export const NewModuleModal: React.FC<NewModuleModalProps> = ({
     "storage",
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     onSave(formData);
     setFormData({ name: "", icon: "extension" });
@@ -108,4 +108,4 @@ export const NewModuleModal: React.FC<NewModuleModalProps> = ({
       </form>
     </Modal>
   );
-};
+}

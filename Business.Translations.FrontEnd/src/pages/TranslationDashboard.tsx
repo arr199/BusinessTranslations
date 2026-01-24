@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Sidebar,
   ModulesSidebar,
@@ -7,6 +7,7 @@ import {
   TranslationTable,
   Footer,
   DeleteConfirmModal,
+  ConfirmNameModal,
   NewTranslationModal,
   NewLanguageModal,
   NewModuleModal,
@@ -18,9 +19,15 @@ import { useDarkMode } from "../hooks/useDarkMode";
 import { useTranslationStore } from "../store/translationStore";
 import { useInitializeData } from "../hooks/useInitializeData";
 import { SAMPLE_MODULES } from "../data/sampleData";
+import { runMigration } from "../services/migrationService";
+import { SettingsPage } from "./SettingsPage";
 
-export const TranslationDashboard: React.FC = () => {
+export function TranslationDashboard() {
   const [isDarkMode, toggleDarkMode] = useDarkMode();
+
+  const [activeView, setActiveView] = useState<"dashboard" | "settings">(
+    "dashboard",
+  );
 
   // Modal states
   const [deleteModal, setDeleteModal] = useState<{
@@ -36,6 +43,16 @@ export const TranslationDashboard: React.FC = () => {
   const [isNewLanguageOpen, setIsNewLanguageOpen] = useState(false);
   const [isNewModuleOpen, setIsNewModuleOpen] = useState(false);
   const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(true);
+  const [deleteModuleModal, setDeleteModuleModal] = useState<{
+    isOpen: boolean;
+    id: string;
+    name: string;
+  }>({ isOpen: false, id: "", name: "" });
+  const [deleteLanguageModal, setDeleteLanguageModal] = useState<{
+    isOpen: boolean;
+    code: string;
+    name: string;
+  }>({ isOpen: false, code: "", name: "" });
 
   // Initialize data from API or mock
   const {
@@ -57,6 +74,9 @@ export const TranslationDashboard: React.FC = () => {
     createTranslation,
     createModule,
     createLanguage,
+    updateModule,
+    deleteModule,
+    deleteLanguage,
     setSearchValue,
     setSelectedLanguage,
     setSelectedModule,
@@ -64,6 +84,14 @@ export const TranslationDashboard: React.FC = () => {
     setItemsPerPage,
     clearError,
   } = useTranslationStore();
+
+  const openSettings = () => setActiveView("settings");
+  const backToDashboard = () => setActiveView("dashboard");
+
+  const handleSelectModule = (module: string) => {
+    setSelectedModule(module);
+    if (activeView === "settings") backToDashboard();
+  };
 
   // Modal handlers
   const handleDelete = (id: string, key: string) => {
@@ -76,6 +104,24 @@ export const TranslationDashboard: React.FC = () => {
       setDeleteModal({ isOpen: false, id: "", key: "" });
     } catch (error) {
       console.error("Failed to delete translation:", error);
+    }
+  };
+
+  const confirmDeleteModule = async () => {
+    try {
+      await deleteModule(deleteModuleModal.id);
+      setDeleteModuleModal({ isOpen: false, id: "", name: "" });
+    } catch (error) {
+      console.error("Failed to delete module:", error);
+    }
+  };
+
+  const confirmDeleteLanguage = async () => {
+    try {
+      await deleteLanguage(deleteLanguageModal.code);
+      setDeleteLanguageModal({ isOpen: false, code: "", name: "" });
+    } catch (error) {
+      console.error("Failed to delete language:", error);
     }
   };
 
@@ -126,6 +172,26 @@ export const TranslationDashboard: React.FC = () => {
     }
   };
 
+  const handleRunMigration = async () => {
+    try {
+      console.log("Starting database migration...");
+      const result = await runMigration();
+
+      if (result.success) {
+        console.log("Migration completed successfully:", result);
+        alert(
+          `Migration successful! Created tables: ${result.tablesCreated?.join(", ") || "all tables"}`,
+        );
+      } else {
+        console.error("Migration failed:", result.message);
+        alert(`Migration failed: ${result.message}`);
+      }
+    } catch (error) {
+      console.error("Migration error:", error);
+      alert("Migration failed. Check console for details.");
+    }
+  };
+
   // Filter options for dropdowns
   const moduleFilterOptions = storeModules
     .filter((m) => m.name !== "All Modules")
@@ -140,7 +206,7 @@ export const TranslationDashboard: React.FC = () => {
   const moduleOptions = (
     storeModules.length > 0 ? storeModules : SAMPLE_MODULES
   ).map((m) => ({
-    value: m.id || m.name,
+    value: m.name,
     label: m.name,
   }));
   const languageOptions = storeLanguages.map((l) => ({
@@ -149,7 +215,7 @@ export const TranslationDashboard: React.FC = () => {
   }));
 
   // Get filtered translations (computed in component for reactivity)
-  const filteredTranslations = React.useMemo(() => {
+  const filteredTranslations = useMemo(() => {
     let filtered = translations;
 
     // Filter by search
@@ -177,64 +243,108 @@ export const TranslationDashboard: React.FC = () => {
 
   return (
     <div className="bg-slate-50 dark:bg-[#0b1219] text-slate-900 dark:text-slate-100 min-h-screen flex overflow-hidden">
-      <Sidebar userImageUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuCkqZqUPgAIcZ6ukMm6kXpj8S4eiJe9hBd7Oiu2-kdV1blhedrK0EC_Kol1us9gGdnbkG7FdcBRX2iLQc3_l9GOj5csKiTlnHEEa0UjfYjaVYpBRbLJkXKyE78FPT5UDjbvo862K8-LhAPXrTTl6ZP_C-MNw9bYr-o66pafejwbSERScyTu3xC13nSwZb4nHDeWMHbCx8Ko-CtI8yhY-89AXxsVjkNESjJsPO7FZIYPCQBg0qnfpoLXWjiXFw_lug6OYcx75V0_UeSH" />
-
-      <ModulesSidebar modules={SAMPLE_MODULES} progress={82} />
-
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <Header
-          title="Translations"
-          version="v2.4.0-stable"
-          isDarkMode={isDarkMode}
-          onToggleDarkMode={toggleDarkMode}
-          onAddLanguage={() => setIsNewLanguageOpen(true)}
-          onAddModule={() => setIsNewModuleOpen(true)}
-          onAddKey={() => setIsNewTranslationOpen(true)}
-        />
-
-        <FilterBar
-          searchValue={searchValue}
-          onSearchChange={setSearchValue}
-          selectedLanguage={selectedLanguage}
-          onLanguageChange={setSelectedLanguage}
-          selectedModule={selectedModule}
-          onModuleChange={setSelectedModule}
-          languages={languageFilterOptions}
-          modules={moduleFilterOptions}
-          onExport={() => console.log("Export")}
-          onRefresh={() => console.log("Refresh")}
-          onFilter={() => console.log("Filter")}
-        />
-
-        {error && <ErrorBanner message={error} onDismiss={clearError} />}
-
-        {isLoading ? (
-          <TableSkeleton />
-        ) : (
-          <TranslationTable
-            translations={filteredTranslations}
-            onEdit={updateTranslation}
-            onDelete={handleDelete}
-          />
-        )}
-
-        <Footer
-          currentPage={currentPage}
-          totalItems={1248}
-          itemsPerPage={itemsPerPage}
-          onPageChange={setCurrentPage}
-          onItemsPerPageChange={setItemsPerPage}
-        />
-      </main>
-
-      {/* Modals */}
-      <DeleteConfirmModal
-        isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, id: "", key: "" })}
-        onConfirm={confirmDelete}
-        itemName={deleteModal.key}
+      <Sidebar
+        activeView={activeView}
+        onOpenDashboard={backToDashboard}
+        onOpenSettings={openSettings}
       />
 
+      <ModulesSidebar
+        modules={
+          (storeModules.length > 0 ? storeModules : SAMPLE_MODULES).some(
+            (m) => m.name === "All Modules",
+          )
+            ? storeModules.length > 0
+              ? storeModules
+              : SAMPLE_MODULES
+            : [
+                { id: "all", name: "All Modules", icon: "apps" },
+                ...(storeModules.length > 0 ? storeModules : SAMPLE_MODULES),
+              ]
+        }
+        progress={82}
+        onAddModule={() => setIsNewModuleOpen(true)}
+        selectedModule={selectedModule}
+        onSelectModule={handleSelectModule}
+      />
+
+      {activeView === "dashboard" ? (
+        <main className="flex-1 flex flex-col h-screen overflow-hidden">
+          <Header
+            title="Translations"
+            version="v2.4.0-stable"
+            isDarkMode={isDarkMode}
+            onToggleDarkMode={toggleDarkMode}
+            onAddLanguage={() => setIsNewLanguageOpen(true)}
+            onAddKey={() => setIsNewTranslationOpen(true)}
+          />
+
+          <FilterBar
+            searchValue={searchValue}
+            onSearchChange={setSearchValue}
+            selectedLanguage={selectedLanguage}
+            onLanguageChange={setSelectedLanguage}
+            selectedModule={selectedModule}
+            onModuleChange={setSelectedModule}
+            languages={languageFilterOptions}
+            modules={moduleFilterOptions}
+            onExport={() => console.log("Export")}
+            onRefresh={() => console.log("Refresh")}
+            onFilter={() => console.log("Filter")}
+          />
+
+          {error && <ErrorBanner message={error} onDismiss={clearError} />}
+
+          {isLoading ? (
+            <TableSkeleton />
+          ) : (
+            <TranslationTable
+              translations={filteredTranslations}
+              onEdit={updateTranslation}
+              onDelete={handleDelete}
+            />
+          )}
+
+          <Footer
+            currentPage={currentPage}
+            totalItems={1248}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            onItemsPerPageChange={setItemsPerPage}
+          />
+        </main>
+      ) : (
+        <SettingsPage
+          modules={storeModules.length > 0 ? storeModules : SAMPLE_MODULES}
+          languages={storeLanguages}
+          onBack={backToDashboard}
+          onAddModule={() => setIsNewModuleOpen(true)}
+          onAddLanguage={() => setIsNewLanguageOpen(true)}
+          onRenameModule={async (moduleId, newName) => {
+            try {
+              await updateModule(moduleId, { name: newName });
+            } catch (error) {
+              console.error("Failed to update module:", error);
+            }
+          }}
+          onRequestDeleteModule={(module) =>
+            setDeleteModuleModal({
+              isOpen: true,
+              id: module.id,
+              name: module.name,
+            })
+          }
+          onRequestDeleteLanguage={(language) =>
+            setDeleteLanguageModal({
+              isOpen: true,
+              code: language.code,
+              name: language.name,
+            })
+          }
+        />
+      )}
+
+      {/* Modals */}
       <NewTranslationModal
         isOpen={isNewTranslationOpen}
         onClose={() => setIsNewTranslationOpen(false)}
@@ -258,11 +368,38 @@ export const TranslationDashboard: React.FC = () => {
       <DatabaseSchemaModal
         isOpen={isSchemaModalOpen}
         onClose={() => setIsSchemaModalOpen(false)}
-        onRunMigration={() => {
-          console.log("Run migration");
-          setIsSchemaModalOpen(false);
-        }}
+        onRunMigration={handleRunMigration}
+      />
+
+      {/* Confirm modals last so they stack above other modals */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, id: "", key: "" })}
+        onConfirm={confirmDelete}
+        itemName={deleteModal.key}
+      />
+
+      <DeleteConfirmModal
+        isOpen={deleteLanguageModal.isOpen}
+        onClose={() =>
+          setDeleteLanguageModal({ isOpen: false, code: "", name: "" })
+        }
+        onConfirm={confirmDeleteLanguage}
+        itemName={`${deleteLanguageModal.code} — ${deleteLanguageModal.name}`}
+        title="Delete Language"
+        prompt="Are you sure you want to delete this language?"
+      />
+
+      <ConfirmNameModal
+        isOpen={deleteModuleModal.isOpen}
+        onClose={() =>
+          setDeleteModuleModal({ isOpen: false, id: "", name: "" })
+        }
+        onConfirm={confirmDeleteModule}
+        title="Delete Module"
+        prompt="This will permanently delete the module and may remove related translations."
+        requiredText={deleteModuleModal.name}
       />
     </div>
   );
-};
+}
