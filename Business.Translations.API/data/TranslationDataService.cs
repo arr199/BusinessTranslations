@@ -1,4 +1,7 @@
+using System.Reflection;
+using System.Text;
 using Business.Translations.API.data;
+using Business.Translations.API.endpoints.Translations;
 using businessTranslations.configuration;
 using Microsoft.Data.SqlClient;
 
@@ -63,22 +66,62 @@ public class TranslationDataService
         using var cmd = new SqlCommand(query, connection);
         var result = await cmd.ExecuteScalarAsync();
 
+#if DEBUG
         await DatabaseSeeder.SeedDummyDataAsync(_config.ConnectionString, CancellationToken.None);
+#endif
     }
 
-    public async Task<List<TranslationModel>> GetTranslations()
+    public async Task<List<TranslationModel>> GetTranslations(GetTranslationFilters filters)
     {
         using var connection = new SqlConnection(_config.ConnectionString);
         await connection.OpenAsync();
-        var query =
+        var sql = new StringBuilder(
             @"
             SELECT Id,ModuleId,KeyName,LanguageId,
             Value,Status,CreatedAt,UpdatedAt
-            FROM BTTranslations;
-            ";
+            FROM BTTranslations
+            "
+        );
 
-        using var cmd = new SqlCommand(query, connection);
-        var reader = await cmd.ExecuteReaderAsync();
+        using var cmd = new SqlCommand();
+        List<string> where = [];
+
+        //  ModuleId filter
+        if (filters.ModuleId is not null)
+        {
+            where.Add($"ModuleId = @ModuleId");
+            cmd.Parameters.AddWithValue("ModuleId", filters.ModuleId);
+        }
+
+        //  LanguageId filter
+        if (filters.LanguageId is not null)
+        {
+            where.Add("LanguageId = @LanguageId");
+            cmd.Parameters.AddWithValue("LanguageId", filters.LanguageId);
+        }
+
+        if (where.Count > 0)
+        {
+            sql.Append("WHERE ");
+            sql.Append(string.Join(" AND ", where));
+        }
+
+        var offset = filters?.Offset ?? 0;
+        var limit = filters?.Limit ?? 50;
+
+        sql.Append(" ORDER BY KeyName ");
+        sql.Append(" OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY");
+
+        cmd.Parameters.AddWithValue("@Offset", offset);
+        cmd.Parameters.AddWithValue("@Limit", limit);
+
+#if DEBUG
+        Console.WriteLine(sql.ToString());
+#endif
+        cmd.Connection = connection;
+        cmd.CommandText = sql.ToString();
+
+        await using var reader = await cmd.ExecuteReaderAsync();
 
         List<TranslationModel> results = [];
 

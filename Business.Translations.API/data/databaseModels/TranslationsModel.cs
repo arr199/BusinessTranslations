@@ -1,11 +1,11 @@
 public class TranslationModel
 {
-    public int Id { get; set; }
-    public int ModuleId { get; set; }
-    public int LanguageId { get; set; }
-    public string KeyName { get; set; }
-    public string Value { get; set; }
-    public string Status { get; set; }
-    public DateTime CreateAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public required int Id { get; set; }
+    public required int ModuleId { get; set; }
+    public required int LanguageId { get; set; }
+    public required string KeyName { get; set; }
+    public required string Value { get; set; }
+    public required string Status { get; set; }
+    public required DateTime CreateAt { get; set; }
+    public required DateTime UpdatedAt { get; set; }
 }

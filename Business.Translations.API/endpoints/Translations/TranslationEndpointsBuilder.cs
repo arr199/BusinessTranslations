@@ -34,24 +34,22 @@ public class TranslationEndpointsBuilder : ITranslationEndpointsBuilder
                     await _tDataService.CreateTables();
 
                     await context.Response.WriteAsJsonAsync(
-                        new TranslationApiResponse()
+                        new ApiResponse()
                         {
                             Success = true,
                             Message = "Tables created successfully",
                             Error = null,
-                            Data = [],
                         }
                     );
                 }
                 catch (Exception ex)
                 {
                     await context.Response.WriteAsJsonAsync(
-                        new TranslationApiResponse()
+                        new ApiResponse()
                         {
                             Success = false,
                             Message = "En error occurred while creating the tables",
                             Error = ex.ToString(),
-                            Data = [],
                         }
                     );
                 }
@@ -65,14 +63,14 @@ public class TranslationEndpointsBuilder : ITranslationEndpointsBuilder
         var _tDataService = new TranslationDataService(config);
         app.MapGet(
             GET_TRANSLATIONS,
-            async (context) =>
+            async (HttpContext context, [AsParameters] GetTranslationFilters filters) =>
             {
                 try
                 {
-                    var data = await _tDataService.GetTranslations();
+                    var data = await _tDataService.GetTranslations(filters);
 
                     await context.Response.WriteAsJsonAsync(
-                        new GetTranslationDto()
+                        new GetTranslationResponse()
                         {
                             Success = true,
                             Message = "translation fetched successfully",
@@ -84,7 +82,7 @@ public class TranslationEndpointsBuilder : ITranslationEndpointsBuilder
                 catch (Exception ex)
                 {
                     await context.Response.WriteAsJsonAsync(
-                        new GetTranslationDto()
+                        new GetTranslationResponse()
                         {
                             Success = false,
                             Message = "En error occurred while getting the translations",
@@ -98,18 +96,23 @@ public class TranslationEndpointsBuilder : ITranslationEndpointsBuilder
     }
 }
 
-public class GetTranslationDto()
+public class GetTranslationFilters
 {
-    public required bool Success { get; set; }
-    public required string Message { get; set; }
-    public required string? Error { get; set; }
+    public int? ModuleId { get; set; }
+    public string? Keywords { get; set; }
+    public int? LanguageId { get; set; }
+    public int? Limit { get; set; } = 50;
+    public int? Offset { get; set; } = 2;
+}
+
+public class GetTranslationResponse() : ApiResponse
+{
     public required List<TranslationModel> Data { get; set; }
 }
 
-public class TranslationApiResponse()
+public class ApiResponse()
 {
     public required bool Success { get; set; }
     public required string Message { get; set; }
     public required string? Error { get; set; }
-    public required List<TranslationModel>? Data { get; set; }
 }

@@ -13,6 +13,8 @@ public static class DatabaseSeeder
         await using var connection = new SqlConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
+        Console.WriteLine("Seeding Database");
+
         // Minimal dummy seed (idempotent)
         const string sql =
             @"
