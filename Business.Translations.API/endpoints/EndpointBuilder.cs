@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Business.Translations.API.endpoints.Translations;
 using businessTranslations.configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -14,9 +15,10 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
         AddStaticFiles(app, config);
         AddDashboardEndpoint(app, config);
         AddConfigurationEndpoint(app, config);
+        AddTranslationsEndpoints(app, config);
     }
 
-    private static void AddStaticFiles(WebApplication app, BTConfiguration config)
+    public static void AddStaticFiles(WebApplication app, BTConfiguration config)
     {
         app.UseStaticFiles(
             new StaticFileOptions()
@@ -29,8 +31,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
         );
     }
 
-    // /dashboard
-    private static void AddDashboardEndpoint(WebApplication app, BTConfiguration config)
+    public static void AddDashboardEndpoint(WebApplication app, BTConfiguration config)
     {
         string endpoint = $"{config.BasePath}/{Endpoints.DASHBOARD}";
 
@@ -49,7 +50,12 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
         );
     }
 
-    //  /configuration
+    public static void AddTranslationsEndpoints(WebApplication app, BTConfiguration config)
+    {
+        TranslationEndpointsBuilder.AddTranslationsEndpoints(app, config);
+    }
+
+    //  /configuration for testing purposes
     private static void AddConfigurationEndpoint(WebApplication app, BTConfiguration config)
     {
         string endpoint = $"{config.BasePath}/{Endpoints.CONFIGURATION}";

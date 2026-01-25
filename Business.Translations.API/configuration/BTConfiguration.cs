@@ -5,6 +5,7 @@ namespace businessTranslations.configuration;
 public class BTConfiguration : IBTConfiguration
 {
     private string _basePath = "bt";
+    private string _connectionString = string.Empty;
 
     public string BasePath
     {
@@ -24,6 +25,16 @@ public class BTConfiguration : IBTConfiguration
             }
 
             _basePath = value;
+        }
+    }
+
+    public string ConnectionString
+    {
+        get => _connectionString;
+        set
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(value, nameof(ConnectionString));
+            _connectionString = value;
         }
     }
 

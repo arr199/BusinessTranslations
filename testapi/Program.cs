@@ -17,8 +17,13 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseBusinessTranslations(d =>
 {
-    d.BasePath = "bt";
-    d.UseSql = true;
+    d.ConnectionString =
+        "Data Source=localhost\\SQLEXPRESS;Initial Catalog=TranslationsAPI;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Command Timeout=0";
 });
+
+Console.WriteLine($"http://localhost:5100/bt/dashboard");
+Console.WriteLine($"http://localhost:5100/bt/configure");
+Console.WriteLine($"http://localhost:5100/bt/createTables");
+Console.WriteLine($"http://localhost:5100/bt/translation");
 
 app.Run();

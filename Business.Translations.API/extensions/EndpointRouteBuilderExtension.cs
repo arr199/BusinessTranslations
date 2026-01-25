@@ -2,6 +2,7 @@ using businessTranslations.configuration;
 using businessTranslations.endpoints;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace businessTranslations.extensions;
 

@@ -16,35 +16,37 @@
 -- Table: Languages
 -- Description: Stores all available languages for translations
 -- ============================================================================
-CREATE TABLE Languages (
+CREATE TABLE BTLanguages (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     Code NVARCHAR(5) UNIQUE NOT NULL,
     Name NVARCHAR(50) NOT NULL,
     IsActive BIT DEFAULT 1,
-    CreatedAt DATETIME2 DEFAULT GETUTCDATE()
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME2 DEFAULT GETUTCDATE()
 );
-CREATE INDEX idx_code ON Languages(Code);
-CREATE INDEX idx_is_active ON Languages(IsActive);
+CREATE INDEX idx_code ON BTLanguages(Code);
+CREATE INDEX idx_is_active ON BTLanguages(IsActive);
 
 -- ============================================================================
 -- Table: Modules
 -- Description: Organizes translations by application modules or features
 -- ============================================================================
-CREATE TABLE Modules (
+CREATE TABLE BTModules (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     Name NVARCHAR(100) UNIQUE NOT NULL,
     Slug NVARCHAR(100) UNIQUE NOT NULL,
     Icon NVARCHAR(50),
     Description NVARCHAR(MAX),
-    CreatedAt DATETIME2 DEFAULT GETUTCDATE()
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME2 DEFAULT GETUTCDATE()
 );
-CREATE INDEX idx_slug ON Modules(Slug);
+CREATE INDEX idx_slug ON BTModules(Slug);
 
 -- ============================================================================
 -- Table: Translations
 -- Description: Stores translation key-value pairs for each language and module
 -- ============================================================================
-CREATE TABLE Translations (
+CREATE TABLE BTTranslations (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     ModuleId INT NOT NULL,
     KeyName NVARCHAR(255) NOT NULL,
@@ -53,28 +55,28 @@ CREATE TABLE Translations (
     Status NVARCHAR(20) DEFAULT 'pending',
     CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
     UpdatedAt DATETIME2 DEFAULT GETUTCDATE(),
-    CONSTRAINT FK_translations_modules FOREIGN KEY (ModuleId) REFERENCES Modules(Id) ON DELETE CASCADE,
-    CONSTRAINT FK_translations_languages FOREIGN KEY (LanguageId) REFERENCES Languages(Id) ON DELETE CASCADE,
+    CONSTRAINT FK_translations_modules FOREIGN KEY (ModuleId) REFERENCES BTModules(Id) ON DELETE CASCADE,
+    CONSTRAINT FK_translations_languages FOREIGN KEY (LanguageId) REFERENCES BTLanguages(Id) ON DELETE CASCADE,
     CONSTRAINT UQ_translation UNIQUE (ModuleId, KeyName, LanguageId)
 );
-CREATE INDEX idx_module_id ON Translations(ModuleId);
-CREATE INDEX idx_language_id ON Translations(LanguageId);
-CREATE INDEX idx_key_name ON Translations(KeyName);
-CREATE INDEX idx_status ON Translations(Status);
+CREATE INDEX idx_module_id ON BTTranslations(ModuleId);
+CREATE INDEX idx_language_id ON BTTranslations(LanguageId);
+CREATE INDEX idx_key_name ON BTTranslations(KeyName);
+CREATE INDEX idx_status ON BTTranslations(Status);
 
 -- ============================================================================
 -- Optional: Trigger to update UpdatedAt automatically
 -- ============================================================================
 GO
 CREATE TRIGGER trg_translations_updated_at
-ON Translations
+ON BTTranslations
 AFTER UPDATE
 AS
 BEGIN
     SET NOCOUNT ON;
     UPDATE t
     SET UpdatedAt = GETUTCDATE()
-    FROM Translations t
+    FROM BTTranslations t
     INNER JOIN inserted i ON t.Id = i.Id;
 END;
 GO
