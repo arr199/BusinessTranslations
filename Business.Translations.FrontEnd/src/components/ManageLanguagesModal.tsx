@@ -1,11 +1,11 @@
-import type { Language } from "../data/sampleData";
+import type { UiLanguage } from "../types";
 import { Modal } from "./Modal";
 
 interface ManageLanguagesModalProps {
   isOpen: boolean;
   onClose: () => void;
-  languages: Language[];
-  onDeleteLanguage: (language: Language) => void;
+  languages: UiLanguage[];
+  onDeleteLanguage: (language: UiLanguage) => void;
 }
 
 export function ManageLanguagesModal({

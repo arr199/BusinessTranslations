@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using Business.Translations.API.data;
 using Business.Translations.API.endpoints.Translations;
 using businessTranslations.configuration;
@@ -77,9 +78,41 @@ public class TranslationDataService
         await connection.OpenAsync();
         var sql = new StringBuilder(
             @"
-            SELECT Id,ModuleId,KeyName,LanguageId,
-            Value,Status,CreatedAt,UpdatedAt
-            FROM BTTranslations
+            SELECT
+                t.Id,
+                t.ModuleId,
+                t.LanguageId,
+                t.KeyName,
+                COALESCE(t.Value, N'') AS Value,
+                t.Status,
+                t.CreatedAt,
+                t.UpdatedAt,
+
+                JSON_QUERY((
+                    SELECT
+                        m.Id,
+                        m.Name,
+                        m.Slug,
+                        m.Icon,
+                        m.Description,
+                        m.CreatedAt,
+                        m.UpdatedAt
+                    FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
+                )) AS Module,
+
+                JSON_QUERY((
+                    SELECT
+                        l.Id,
+                        l.Code,
+                        l.Name,
+                        l.IsActive,
+                        l.CreatedAt,
+                        l.UpdatedAt
+                    FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
+                )) AS Language
+            FROM BTTranslations t
+            INNER JOIN BTModules m ON m.Id = t.ModuleId
+            INNER JOIN BTLanguages l ON l.Id = t.LanguageId
             "
         );
 
@@ -89,31 +122,37 @@ public class TranslationDataService
         //  ModuleId filter
         if (filters.ModuleId is not null)
         {
-            where.Add($"ModuleId = @ModuleId");
+            where.Add("t.ModuleId = @ModuleId");
             cmd.Parameters.AddWithValue("ModuleId", filters.ModuleId);
         }
 
         //  LanguageId filter
         if (filters.LanguageId is not null)
         {
-            where.Add("LanguageId = @LanguageId");
+            where.Add("t.LanguageId = @LanguageId");
             cmd.Parameters.AddWithValue("LanguageId", filters.LanguageId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filters.Keywords))
+        {
+            where.Add("(t.KeyName LIKE @Keywords OR COALESCE(t.Value, N'') LIKE @Keywords)");
+            cmd.Parameters.AddWithValue("Keywords", $"%{filters.Keywords.Trim()}%");
         }
 
         if (where.Count > 0)
         {
-            sql.Append("WHERE ");
+            sql.Append(" WHERE ");
             sql.Append(string.Join(" AND ", where));
         }
 
         var offset = filters?.Offset ?? 0;
         var limit = filters?.Limit ?? 50;
 
-        sql.Append(" ORDER BY KeyName ");
+        sql.Append(" ORDER BY t.KeyName ");
         sql.Append(" OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY");
 
-        cmd.Parameters.AddWithValue("@Offset", offset);
-        cmd.Parameters.AddWithValue("@Limit", limit);
+        cmd.Parameters.AddWithValue("Offset", offset);
+        cmd.Parameters.AddWithValue("Limit", limit);
 
 #if DEBUG
         Console.WriteLine(sql.ToString());
@@ -127,6 +166,15 @@ public class TranslationDataService
 
         while (await reader.ReadAsync())
         {
+            var moduleJson = reader.IsDBNull(reader.GetOrdinal("Module"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("Module"));
+            var languageJson = reader.IsDBNull(reader.GetOrdinal("Language"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("Language"));
+
+            var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
             TranslationModel translation = new()
             {
                 Id = reader.GetInt32(reader.GetOrdinal("Id")),
@@ -137,9 +185,122 @@ public class TranslationDataService
                 Status = reader.GetString(reader.GetOrdinal("Status")),
                 CreateAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                 UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+
+                Module = moduleJson is null
+                    ? new ModuleModel
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("ModuleId")),
+                        Name = "",
+                        Slug = "",
+                        CreatedAt = DateTime.MinValue,
+                        UpdatedAt = DateTime.MinValue,
+                    }
+                    : JsonSerializer.Deserialize<ModuleModel>(moduleJson, jsonOptions)!,
+
+                Language = languageJson is null
+                    ? new LanguageModel
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("LanguageId")),
+                        Code = "",
+                        Name = "",
+                        IsActive = true,
+                        CreatedAt = DateTime.MinValue,
+                        UpdatedAt = DateTime.MinValue,
+                    }
+                    : JsonSerializer.Deserialize<LanguageModel>(languageJson, jsonOptions)!,
             };
 
             results.Add(translation);
+        }
+
+        return results;
+    }
+
+    public async Task<List<ModuleModel>> GetModules()
+    {
+        using var connection = new SqlConnection(_config.ConnectionString);
+        await connection.OpenAsync();
+
+        var sql = new StringBuilder(
+            @"
+            SELECT
+                Id,
+                Name,
+                Slug,
+                Icon,
+                Description,
+                CreatedAt,
+                UpdatedAt
+            FROM BTModules
+            ORDER BY Name
+            "
+        );
+
+        using var cmd = new SqlCommand(sql.ToString(), connection);
+        await using var reader = await cmd.ExecuteReaderAsync();
+
+        List<ModuleModel> results = [];
+
+        while (await reader.ReadAsync())
+        {
+            results.Add(
+                new ModuleModel
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    Name = reader.GetString(reader.GetOrdinal("Name")),
+                    Slug = reader.GetString(reader.GetOrdinal("Slug")),
+                    Icon = reader.IsDBNull(reader.GetOrdinal("Icon"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("Icon")),
+                    Description = reader.IsDBNull(reader.GetOrdinal("Description"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("Description")),
+                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                    UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                }
+            );
+        }
+
+        return results;
+    }
+
+    public async Task<List<LanguageModel>> GetLanguages()
+    {
+        using var connection = new SqlConnection(_config.ConnectionString);
+        await connection.OpenAsync();
+
+        var sql = new StringBuilder(
+            @"
+            SELECT
+                Id,
+                Code,
+                Name,
+                IsActive,
+                CreatedAt,
+                UpdatedAt
+            FROM BTLanguages
+            ORDER BY Name
+            "
+        );
+
+        using var cmd = new SqlCommand(sql.ToString(), connection);
+        await using var reader = await cmd.ExecuteReaderAsync();
+
+        List<LanguageModel> results = [];
+
+        while (await reader.ReadAsync())
+        {
+            results.Add(
+                new LanguageModel
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    Code = reader.GetString(reader.GetOrdinal("Code")),
+                    Name = reader.GetString(reader.GetOrdinal("Name")),
+                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                    UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                }
+            );
         }
 
         return results;

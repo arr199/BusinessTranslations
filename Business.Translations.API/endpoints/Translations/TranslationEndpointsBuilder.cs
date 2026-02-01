@@ -11,6 +11,8 @@ public class TranslationEndpointsBuilder : ITranslationEndpointsBuilder
 {
     private const string CREATE_TABLES = "bt/createTables";
     private const string GET_TRANSLATIONS = "bt/translation";
+    private const string GET_MODULES = "bt/modules";
+    private const string GET_LANGUAGES = "bt/languages";
     private const string INSERT_TRANSLATIONS = "bt/translation";
     private const string UPDATE_TRANSLATIONS = "bt/translation";
     private const string DELETE_TRANSLATIONS = "bt/translation";
@@ -19,6 +21,8 @@ public class TranslationEndpointsBuilder : ITranslationEndpointsBuilder
     {
         CreateTablesEndpoint(app, config);
         GetTranslationEndpoint(app, config);
+        GetModulesEndpoint(app, config);
+        GetLanguagesEndpoint(app, config);
     }
 
     [EndpointName(CREATE_TABLES)]
@@ -94,6 +98,82 @@ public class TranslationEndpointsBuilder : ITranslationEndpointsBuilder
             }
         );
     }
+
+    [EndpointName(GET_MODULES)]
+    private static void GetModulesEndpoint(WebApplication app, BTConfiguration config)
+    {
+        var tDataService = new TranslationDataService(config);
+        app.MapGet(
+            GET_MODULES,
+            async (HttpContext context) =>
+            {
+                try
+                {
+                    var data = await tDataService.GetModules();
+
+                    await context.Response.WriteAsJsonAsync(
+                        new GetModulesResponse
+                        {
+                            Success = true,
+                            Message = "modules fetched successfully",
+                            Error = null,
+                            Data = data,
+                        }
+                    );
+                }
+                catch (Exception ex)
+                {
+                    await context.Response.WriteAsJsonAsync(
+                        new GetModulesResponse
+                        {
+                            Success = false,
+                            Message = "An error occurred while getting the modules",
+                            Error = ex.ToString(),
+                            Data = [],
+                        }
+                    );
+                }
+            }
+        );
+    }
+
+    [EndpointName(GET_LANGUAGES)]
+    private static void GetLanguagesEndpoint(WebApplication app, BTConfiguration config)
+    {
+        var tDataService = new TranslationDataService(config);
+        app.MapGet(
+            GET_LANGUAGES,
+            async (HttpContext context) =>
+            {
+                try
+                {
+                    var data = await tDataService.GetLanguages();
+
+                    await context.Response.WriteAsJsonAsync(
+                        new GetLanguagesResponse
+                        {
+                            Success = true,
+                            Message = "languages fetched successfully",
+                            Error = null,
+                            Data = data,
+                        }
+                    );
+                }
+                catch (Exception ex)
+                {
+                    await context.Response.WriteAsJsonAsync(
+                        new GetLanguagesResponse
+                        {
+                            Success = false,
+                            Message = "An error occurred while getting the languages",
+                            Error = ex.ToString(),
+                            Data = [],
+                        }
+                    );
+                }
+            }
+        );
+    }
 }
 
 public class GetTranslationFilters
@@ -102,12 +182,22 @@ public class GetTranslationFilters
     public string? Keywords { get; set; }
     public int? LanguageId { get; set; }
     public int? Limit { get; set; } = 50;
-    public int? Offset { get; set; } = 2;
+    public int? Offset { get; set; } = 0;
 }
 
 public class GetTranslationResponse() : ApiResponse
 {
     public required List<TranslationModel> Data { get; set; }
+}
+
+public class GetModulesResponse() : ApiResponse
+{
+    public required List<ModuleModel> Data { get; set; }
+}
+
+public class GetLanguagesResponse() : ApiResponse
+{
+    public required List<LanguageModel> Data { get; set; }
 }
 
 public class ApiResponse()

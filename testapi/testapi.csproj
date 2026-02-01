@@ -3,7 +3,12 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <FrontendWorkingDir>$(MSBuildProjectDirectory)\..\Business.Translations.FrontEnd</FrontendWorkingDir>
   </PropertyGroup>
+
+  <Target Name="BuildFrontend" BeforeTargets="Build;Publish">
+    <Exec WorkingDirectory="$(FrontendWorkingDir)" Command="npm run build" />
+  </Target>
 
   <ItemGroup>
     <ProjectReference Include="../Business.Translations.API/Business.Translations.API.csproj" />

@@ -1,12 +1,5 @@
 import { useEffect } from "react";
 import { useTranslationStore } from "../store/translationStore";
-import {
-  SAMPLE_TRANSLATIONS,
-  SAMPLE_MODULES,
-  SAMPLE_LANGUAGES,
-} from "../data/sampleData";
-
-const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === "true";
 
 export function useInitializeData() {
   const {
@@ -24,25 +17,12 @@ export function useInitializeData() {
 
   useEffect(() => {
     const initializeData = async () => {
-      if (USE_MOCK_DATA) {
-        // Use mock data for development
-        useTranslationStore.setState({
-          translations: SAMPLE_TRANSLATIONS,
-          modules: SAMPLE_MODULES,
-          languages: SAMPLE_LANGUAGES,
-        });
-      } else {
-        // Fetch from API
-        await Promise.all([
-          fetchTranslations(),
-          fetchModules(),
-          fetchLanguages(),
-        ]);
-      }
+      await Promise.all([fetchModules(), fetchLanguages()]);
+      await fetchTranslations();
     };
 
     initializeData();
-  }, [fetchTranslations, fetchModules, fetchLanguages]);
+  }, [fetchTranslations, fetchLanguages, fetchModules]);
 
   return {
     translations,

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Sidebar,
   ModulesSidebar,
@@ -18,7 +18,6 @@ import {
 import { useDarkMode } from "../hooks/useDarkMode";
 import { useTranslationStore } from "../store/translationStore";
 import { useInitializeData } from "../hooks/useInitializeData";
-import { SAMPLE_MODULES } from "../data/sampleData";
 import { runMigration } from "../services/migrationService";
 import { SettingsPage } from "./SettingsPage";
 
@@ -64,6 +63,7 @@ export function TranslationDashboard() {
 
   const {
     translations,
+    fetchTranslations,
     searchValue,
     selectedLanguage,
     selectedModule,
@@ -84,6 +84,62 @@ export function TranslationDashboard() {
     setItemsPerPage,
     clearError,
   } = useTranslationStore();
+
+  const didMountRef = useRef(false);
+  const prevRef = useRef({
+    searchValue,
+    selectedLanguage,
+    selectedModule,
+    currentPage,
+    itemsPerPage,
+  });
+
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      prevRef.current = {
+        searchValue,
+        selectedLanguage,
+        selectedModule,
+        currentPage,
+        itemsPerPage,
+      };
+      return;
+    }
+
+    const prev = prevRef.current;
+    const searchChanged = prev.searchValue !== searchValue;
+    const otherChanged =
+      prev.selectedLanguage !== selectedLanguage ||
+      prev.selectedModule !== selectedModule ||
+      prev.currentPage !== currentPage ||
+      prev.itemsPerPage !== itemsPerPage;
+
+    prevRef.current = {
+      searchValue,
+      selectedLanguage,
+      selectedModule,
+      currentPage,
+      itemsPerPage,
+    };
+
+    if (searchChanged && !otherChanged) {
+      const timer = window.setTimeout(() => {
+        fetchTranslations();
+      }, 350);
+
+      return () => window.clearTimeout(timer);
+    }
+
+    fetchTranslations();
+  }, [
+    searchValue,
+    selectedLanguage,
+    selectedModule,
+    currentPage,
+    itemsPerPage,
+    fetchTranslations,
+  ]);
 
   const openSettings = () => setActiveView("settings");
   const backToDashboard = () => setActiveView("dashboard");
@@ -193,19 +249,18 @@ export function TranslationDashboard() {
   };
 
   // Filter options for dropdowns
-  const moduleFilterOptions = storeModules
-    .filter((m) => m.name !== "All Modules")
-    .map((m) => ({ value: m.name, label: m.name }));
+  const moduleFilterOptions = storeModules.map((m) => ({
+    value: m.name,
+    label: m.name,
+  }));
 
   const languageFilterOptions = storeLanguages.map((l) => ({
     value: l.code,
     label: l.name,
   }));
 
-  // Dropdown options for modals (use store or fallback to SAMPLE_MODULES)
-  const moduleOptions = (
-    storeModules.length > 0 ? storeModules : SAMPLE_MODULES
-  ).map((m) => ({
+  // Dropdown options for modals
+  const moduleOptions = storeModules.map((m) => ({
     value: m.name,
     label: m.name,
   }));
@@ -214,32 +269,10 @@ export function TranslationDashboard() {
     label: l.name,
   }));
 
-  // Get filtered translations (computed in component for reactivity)
-  const filteredTranslations = useMemo(() => {
-    let filtered = translations;
-
-    // Filter by search
-    if (searchValue) {
-      const search = searchValue.toLowerCase();
-      filtered = filtered.filter(
-        (t) =>
-          t.key.toLowerCase().includes(search) ||
-          t.value.toLowerCase().includes(search),
-      );
-    }
-
-    // Filter by language
-    if (selectedLanguage !== "all") {
-      filtered = filtered.filter((t) => t.languageCode === selectedLanguage);
-    }
-
-    // Filter by module
-    if (selectedModule !== "all") {
-      filtered = filtered.filter((t) => t.module === selectedModule);
-    }
-
-    return filtered;
-  }, [translations, searchValue, selectedLanguage, selectedModule]);
+  const modulesWithAll = [
+    { id: "all", name: "All Modules", icon: "apps" },
+    ...storeModules,
+  ];
 
   return (
     <div className="bg-slate-50 dark:bg-[#0b1219] text-slate-900 dark:text-slate-100 min-h-screen flex overflow-hidden">
@@ -250,18 +283,7 @@ export function TranslationDashboard() {
       />
 
       <ModulesSidebar
-        modules={
-          (storeModules.length > 0 ? storeModules : SAMPLE_MODULES).some(
-            (m) => m.name === "All Modules",
-          )
-            ? storeModules.length > 0
-              ? storeModules
-              : SAMPLE_MODULES
-            : [
-                { id: "all", name: "All Modules", icon: "apps" },
-                ...(storeModules.length > 0 ? storeModules : SAMPLE_MODULES),
-              ]
-        }
+        modules={modulesWithAll}
         progress={82}
         onAddModule={() => setIsNewModuleOpen(true)}
         selectedModule={selectedModule}
@@ -289,7 +311,7 @@ export function TranslationDashboard() {
             languages={languageFilterOptions}
             modules={moduleFilterOptions}
             onExport={() => console.log("Export")}
-            onRefresh={() => console.log("Refresh")}
+            onRefresh={() => fetchTranslations()}
             onFilter={() => console.log("Filter")}
           />
 
@@ -299,7 +321,7 @@ export function TranslationDashboard() {
             <TableSkeleton />
           ) : (
             <TranslationTable
-              translations={filteredTranslations}
+              translations={translations}
               onEdit={updateTranslation}
               onDelete={handleDelete}
             />
@@ -315,7 +337,7 @@ export function TranslationDashboard() {
         </main>
       ) : (
         <SettingsPage
-          modules={storeModules.length > 0 ? storeModules : SAMPLE_MODULES}
+          modules={storeModules}
           languages={storeLanguages}
           onBack={backToDashboard}
           onAddModule={() => setIsNewModuleOpen(true)}

@@ -1,16 +1,16 @@
 import { useMemo, useState } from "react";
 import type { Module } from "../types";
-import type { Language } from "../data/sampleData";
+import type { UiLanguage } from "../types";
 
 interface SettingsPageProps {
   modules: Module[];
-  languages: Language[];
+  languages: UiLanguage[];
   onBack: () => void;
   onAddModule: () => void;
   onAddLanguage: () => void;
   onRenameModule: (moduleId: string, newName: string) => void;
   onRequestDeleteModule: (module: Module) => void;
-  onRequestDeleteLanguage: (language: Language) => void;
+  onRequestDeleteLanguage: (language: UiLanguage) => void;
 }
 
 export function SettingsPage({

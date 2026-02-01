@@ -1,14 +1,13 @@
 import { create } from "zustand";
-import type { Translation } from "../types";
+import type { Translation, UiLanguage } from "../types";
 import { translationsApi, modulesApi, languagesApi } from "../services/api";
-import type { Language } from "../data/sampleData";
 import type { Module } from "../types";
 
 interface TranslationStore {
   // State
   translations: Translation[];
   modules: Module[];
-  languages: Language[];
+  languages: UiLanguage[];
   searchValue: string;
   selectedLanguage: string;
   selectedModule: string;
@@ -37,7 +36,7 @@ interface TranslationStore {
 
   // Language actions
   fetchLanguages: () => Promise<void>;
-  createLanguage: (language: Language) => Promise<void>;
+  createLanguage: (language: { code: string; name: string }) => Promise<void>;
   deleteLanguage: (code: string) => Promise<void>;
 
   // Filter actions
@@ -70,7 +69,25 @@ export const useTranslationStore = create<TranslationStore>((set) => ({
   fetchTranslations: async () => {
     set({ isLoadingTranslations: true, error: null });
     try {
-      const translations = await translationsApi.getAll();
+      const state = useTranslationStore.getState();
+
+      const moduleId =
+        state.selectedModule !== "all"
+          ? state.modules.find((m) => m.name === state.selectedModule)?.id
+          : undefined;
+
+      const languageId =
+        state.selectedLanguage !== "all"
+          ? state.languages.find((l) => l.code === state.selectedLanguage)?.id
+          : undefined;
+
+      const translations = await translationsApi.getAll({
+        moduleId,
+        languageId,
+        keywords: state.searchValue,
+        limit: state.itemsPerPage,
+        offset: (state.currentPage - 1) * state.itemsPerPage,
+      });
       set({ translations, isLoadingTranslations: false });
     } catch (error) {
       set({
