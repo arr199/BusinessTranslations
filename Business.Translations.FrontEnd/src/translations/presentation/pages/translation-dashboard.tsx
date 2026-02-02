@@ -294,7 +294,7 @@ export function TranslationDashboard() {
         <main className="flex-1 flex flex-col h-screen overflow-hidden">
           <Header
             title="Translations"
-            version="v2.4.0-stable"
+            version="v1.0.0"
             isDarkMode={isDarkMode}
             onToggleDarkMode={toggleDarkMode}
             onAddLanguage={() => setIsNewLanguageOpen(true)}
@@ -312,7 +312,6 @@ export function TranslationDashboard() {
             modules={moduleFilterOptions}
             onExport={() => console.log("Export")}
             onRefresh={() => fetchTranslations()}
-            onFilter={() => console.log("Filter")}
           />
 
           {error && <ErrorBanner message={error} onDismiss={clearError} />}

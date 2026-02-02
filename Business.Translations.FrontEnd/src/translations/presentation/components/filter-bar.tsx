@@ -16,7 +16,6 @@ interface FilterBarProps {
   modules?: FilterOption[];
   onExport?: () => void;
   onRefresh?: () => void;
-  onFilter?: () => void;
 }
 
 export function FilterBar({
@@ -30,7 +29,6 @@ export function FilterBar({
   modules = [],
   onExport,
   onRefresh,
-  onFilter,
 }: FilterBarProps) {
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
   const [isModuleOpen, setIsModuleOpen] = useState(false);
@@ -188,13 +186,6 @@ export function FilterBar({
         >
           <span className="material-symbols-outlined text-lg">download</span>
           Export
-        </button>
-
-        <button
-          onClick={onFilter}
-          className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors"
-        >
-          <span className="material-symbols-outlined text-lg">filter_list</span>
         </button>
 
         <button
