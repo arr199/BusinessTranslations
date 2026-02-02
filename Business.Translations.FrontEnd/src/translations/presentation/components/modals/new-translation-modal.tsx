@@ -1,17 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { Modal } from "./modal";
 import { Dropdown } from "../dropdown";
+import type { Translation } from "../../../domain/types";
 
 interface NewTranslationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: {
-    module: string;
-    key: string;
-    language: string;
-    languageCode: string;
-    value: string;
-  }) => void;
+  onSave: (data: Translation) => void;
   modules: Array<{ value: string; label: string }>;
   languages: Array<{ value: string; label: string }>;
 }
@@ -23,28 +18,38 @@ export function NewTranslationModal({
   modules,
   languages,
 }: NewTranslationModalProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Translation>({
     module: "",
-    key: "",
+    keyName: "",
     language: "",
     languageCode: "",
     value: "",
+    moduleId: "",
+    languageId: "",
+    id: "",
+    status: "pending",
   });
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+
+    console.log(formData);
     onSave(formData);
     setFormData({
       module: "",
-      key: "",
+      keyName: "",
       language: "",
       languageCode: "",
       value: "",
+      moduleId: "",
+      languageId: "",
+      id: "",
+      status: "pending",
     });
     onClose();
   };
 
-  const isValid = formData.module && formData.key && formData.language;
+  const isValid = formData.module && formData.keyName && formData.language;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Add New Translation">
@@ -55,7 +60,7 @@ export function NewTranslationModal({
           </label>
           <Dropdown
             options={modules}
-            value={formData.module}
+            value={formData.moduleId}
             onChange={(value) => setFormData({ ...formData, module: value })}
             placeholder="Select module"
           />
@@ -67,8 +72,10 @@ export function NewTranslationModal({
           </label>
           <input
             type="text"
-            value={formData.key}
-            onChange={(e) => setFormData({ ...formData, key: e.target.value })}
+            value={formData.keyName}
+            onChange={(e) =>
+              setFormData({ ...formData, keyName: e.target.value })
+            }
             placeholder="e.g., login_welcome_header"
             className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
           />
@@ -80,7 +87,7 @@ export function NewTranslationModal({
           </label>
           <Dropdown
             options={languages}
-            value={formData.languageCode}
+            value={formData.languageId}
             onChange={(value) => {
               const selectedLang = languages.find((l) => l.value === value);
               setFormData({

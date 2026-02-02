@@ -1,8 +1,12 @@
 using System.Runtime.InteropServices.JavaScript;
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using Business.Translations.API.features.translations.data.datasource;
 using businessTranslations.configuration;
+using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
 namespace Business.Translations.API.endpoints.Translations;
@@ -13,20 +17,20 @@ public class TranslationEndpointsBuilder : ITranslationEndpointsBuilder
     private const string GET_TRANSLATIONS = "bt/translation";
     private const string GET_MODULES = "bt/modules";
     private const string GET_LANGUAGES = "bt/languages";
-    private const string INSERT_TRANSLATIONS = "bt/translation";
-    private const string UPDATE_TRANSLATIONS = "bt/translation";
-    private const string DELETE_TRANSLATIONS = "bt/translation";
+    private const string INSERT_TRANSLATION = "bt/translation";
+    private const string UPDATE_TRANSLATION = "bt/translation";
+    private const string DELETE_TRANSLATION = "bt/translation";
 
     public static void AddTranslationsEndpoints(WebApplication app, BTConfiguration config)
     {
-        CreateTablesEndpoint(app, config);
-        GetTranslationEndpoint(app, config);
-        GetModulesEndpoint(app, config);
-        GetLanguagesEndpoint(app, config);
+        AddCreateTablesEndpoint(app, config);
+        AddTranslationEndpoints(app, config);
+        AddModulesEndpoints(app, config);
+        AddLanguagesEndpoints(app, config);
     }
 
     [EndpointName(CREATE_TABLES)]
-    private static void CreateTablesEndpoint(WebApplication app, BTConfiguration config)
+    private static void AddCreateTablesEndpoint(WebApplication app, BTConfiguration config)
     {
         var _tDataSource = new TranslationDataSource(config);
         app.MapGet(
@@ -35,7 +39,7 @@ public class TranslationEndpointsBuilder : ITranslationEndpointsBuilder
             {
                 try
                 {
-                    await _tDataSource.CreateTables();
+                    await _tDataSource.CreateTablesAsync();
 
                     await context.Response.WriteAsJsonAsync(
                         new ApiResponse()
@@ -62,16 +66,20 @@ public class TranslationEndpointsBuilder : ITranslationEndpointsBuilder
     }
 
     [EndpointName(GET_TRANSLATIONS)]
-    private static void GetTranslationEndpoint(WebApplication app, BTConfiguration config)
+    private static void AddTranslationEndpoints(WebApplication app, BTConfiguration config)
     {
         var _tDataSource = new TranslationDataSource(config);
+        var _tValidationService = new TranslationValidationService();
+
         app.MapGet(
             GET_TRANSLATIONS,
-            async (HttpContext context, [AsParameters] GetTranslationFilters filters) =>
+            async (HttpContext context, [AsParameters] GetTranslationRequest filters) =>
             {
                 try
                 {
-                    var data = await _tDataSource.GetTranslations(filters);
+                    await _tValidationService.ValidateAsync(filters);
+
+                    var data = await _tDataSource.GetTranslationsAsync(filters);
 
                     await context.Response.WriteAsJsonAsync(
                         new GetTranslationResponse()
@@ -97,19 +105,53 @@ public class TranslationEndpointsBuilder : ITranslationEndpointsBuilder
                 }
             }
         );
+
+        app.MapPost(
+            INSERT_TRANSLATION,
+            async (HttpContext context, [FromBody] InsertTranslationRequest data) =>
+            {
+                try
+                {
+                    await _tValidationService.ValidateAsync(data);
+                    await _tDataSource.InsertTranslationAsync(data);
+
+                    await context.Response.WriteAsJsonAsync(
+                        new InsertTranslationResponse()
+                        {
+                            Success = true,
+                            Message = "translation created successfully",
+                            Error = null,
+                            Data = [],
+                        }
+                    );
+                }
+                catch (Exception ex)
+                {
+                    await context.Response.WriteAsJsonAsync(
+                        new InsertTranslationResponse()
+                        {
+                            Success = false,
+                            Message = "En error occurred while creating the translation",
+                            Error = ex.ToString(),
+                            Data = [],
+                        }
+                    );
+                }
+            }
+        );
     }
 
     [EndpointName(GET_MODULES)]
-    private static void GetModulesEndpoint(WebApplication app, BTConfiguration config)
+    private static void AddModulesEndpoints(WebApplication app, BTConfiguration config)
     {
-        var _tDataSource = new TranslationDataSource(config);
+        var _mDataSource = new ModuleDataSource(config);
         app.MapGet(
             GET_MODULES,
             async (HttpContext context) =>
             {
                 try
                 {
-                    var data = await _tDataSource.GetModules();
+                    var data = await _mDataSource.GetModules();
 
                     await context.Response.WriteAsJsonAsync(
                         new GetModulesResponse
@@ -138,16 +180,16 @@ public class TranslationEndpointsBuilder : ITranslationEndpointsBuilder
     }
 
     [EndpointName(GET_LANGUAGES)]
-    private static void GetLanguagesEndpoint(WebApplication app, BTConfiguration config)
+    private static void AddLanguagesEndpoints(WebApplication app, BTConfiguration config)
     {
-        var tDataService = new TranslationDataSource(config);
+        var lDataSource = new LanguageDataSource(config);
         app.MapGet(
             GET_LANGUAGES,
             async (HttpContext context) =>
             {
                 try
                 {
-                    var data = await tDataService.GetLanguages();
+                    var data = await lDataSource.GetLanguages();
 
                     await context.Response.WriteAsJsonAsync(
                         new GetLanguagesResponse
@@ -174,35 +216,4 @@ public class TranslationEndpointsBuilder : ITranslationEndpointsBuilder
             }
         );
     }
-}
-
-public class GetTranslationFilters
-{
-    public int? ModuleId { get; set; }
-    public string? Keywords { get; set; }
-    public int? LanguageId { get; set; }
-    public int? Limit { get; set; } = 50;
-    public int? Offset { get; set; } = 0;
-}
-
-public class GetTranslationResponse() : ApiResponse
-{
-    public required List<TranslationModel> Data { get; set; }
-}
-
-public class GetModulesResponse() : ApiResponse
-{
-    public required List<ModuleModel> Data { get; set; }
-}
-
-public class GetLanguagesResponse() : ApiResponse
-{
-    public required List<LanguageModel> Data { get; set; }
-}
-
-public class ApiResponse()
-{
-    public required bool Success { get; set; }
-    public required string Message { get; set; }
-    public required string? Error { get; set; }
 }

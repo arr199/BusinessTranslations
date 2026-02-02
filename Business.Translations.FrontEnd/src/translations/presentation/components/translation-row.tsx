@@ -47,9 +47,9 @@ export function TranslationRow({
       <td className="px-6 py-4">
         <code
           className="text-xs text-primary font-mono truncate block"
-          title={translation.key}
+          title={translation.keyName}
         >
-          {translation.key}
+          {translation.keyName}
         </code>
       </td>
 
@@ -117,7 +117,7 @@ export function TranslationRow({
           </button>
 
           <button
-            onClick={() => onDelete?.(translation.id, translation.key)}
+            onClick={() => onDelete?.(translation.id, translation.keyName)}
             className="p-1.5 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
             title="Delete key"
           >

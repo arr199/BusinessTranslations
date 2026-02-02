@@ -20,6 +20,7 @@ import { useTranslationStore } from "../stateManagement/translation-store";
 import { useInitializeData } from "../hooks/use-Initialize-data";
 import { runMigration } from "../../data/migrationService";
 import { SettingsPage } from "./settings-page";
+import type { Translation } from "../../domain/types";
 
 export function TranslationDashboard() {
   const [isDarkMode, toggleDarkMode] = useDarkMode();
@@ -181,21 +182,18 @@ export function TranslationDashboard() {
     }
   };
 
-  const handleCreateTranslation = async (data: {
-    module: string;
-    key: string;
-    language: string;
-    languageCode: string;
-    value: string;
-  }) => {
+  const handleCreateTranslation = async (data: Translation) => {
     try {
       await createTranslation({
+        
         module: data.module,
-        key: data.key,
+        keyName: data.keyName,
         language: data.language,
         languageCode: data.languageCode,
         value: data.value,
         status: "pending",
+        languageId: data.languageId,
+        moduleId: data.moduleId,
       });
       setIsNewTranslationOpen(false);
     } catch (error) {

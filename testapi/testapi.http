@@ -1,6 +1,20 @@
-@testapi_HostAddress = http://localhost:5100
+@API_URL = http://localhost:5100
 
-GET {{testapi_HostAddress}}/weatherforecast/
+GET {{API_URL}}/bt/Translation?LanguageId=222&Keywords=23123123123123
 Accept: application/json
 
 ###
+POST {{API_URL}}/bt/Translation
+Accept: application/json
+Content-Type: application/json
+
+{
+     "moduleId" : "2",
+     "languageId" : "2",
+     "keyName" : "EXAMPLE",
+     "value" : "EXAMPLE"
+}
+
+
+
+

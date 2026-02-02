@@ -46,10 +46,10 @@ export const translationsDataSource = {
     return (response.data || []).map(mapBtTranslationToUi);
   },
 
-  getById: (id: string) => fetchApi<Translation>(`/translations/${id}`),
+  // getById: (id: string) => fetchApi<Translation>(`/bt/translations/${id}`),
 
   create: (translation: Omit<Translation, "id">) =>
-    fetchApi<Translation>("/translations", {
+    fetchApi<Translation>("/bt/translation", {
       method: "POST",
       body: JSON.stringify(translation),
     }),
@@ -76,10 +76,12 @@ function mapBtTranslationToUi(t: BtTranslationModel): Translation {
   return {
     id: String(t.id),
     module: t.module?.name ?? String(t.moduleId),
-    key: t.keyName,
+    keyName: t.keyName,
     language: t.language?.name ?? `Language ${t.languageId}`,
     languageCode: (t.language?.code ?? String(t.languageId)).toUpperCase(),
     value: t.value ?? "",
     status: normalizeStatus(t.status),
+    languageId: t.languageId.toString(),
+    moduleId: t.moduleId.toString(),
   };
 }

@@ -1,11 +1,20 @@
 export interface Translation {
   id: string;
-  module: string;
-  key: string;
+  languageId: string;
+  moduleId: string;
   language: string;
+  module: string;
+  keyName: string;
   languageCode: string;
   value: string;
   status: "verified" | "missing" | "pending";
+}
+
+export interface CreateTranslationRequest {
+  moduleId: string;
+  languageId: string;
+  keyName: string;
+  value: string;
 }
 
 export interface Module {

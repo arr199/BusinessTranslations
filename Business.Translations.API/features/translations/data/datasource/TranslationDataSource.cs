@@ -1,3 +1,4 @@
+using System.Data;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -16,7 +17,7 @@ public class TranslationDataSource
         _config = config;
     }
 
-    public async Task CreateTables()
+    public async Task CreateTablesAsync()
     {
         using var connection = new SqlConnection(_config.ConnectionString);
         await connection.OpenAsync();
@@ -72,7 +73,7 @@ public class TranslationDataSource
 #endif
     }
 
-    public async Task<List<TranslationModel>> GetTranslations(GetTranslationFilters filters)
+    public async Task<List<TranslationModel>> GetTranslationsAsync(GetTranslationRequest filters)
     {
         using var connection = new SqlConnection(_config.ConnectionString);
         await connection.OpenAsync();
@@ -216,93 +217,36 @@ public class TranslationDataSource
         return results;
     }
 
-    public async Task<List<ModuleModel>> GetModules()
+    public async Task InsertTranslationAsync(InsertTranslationRequest translationDto)
     {
         using var connection = new SqlConnection(_config.ConnectionString);
         await connection.OpenAsync();
 
         var sql = new StringBuilder(
-            @"
-            SELECT
-                Id,
-                Name,
-                Slug,
-                Icon,
-                Description,
-                CreatedAt,
-                UpdatedAt
-            FROM BTModules
-            ORDER BY Name
-            "
+            @"INSERT INTO BTTranslations (ModuleId , LanguageId , KeyName , Value) 
+            VALUES (@ModuleId , @LanguageId , @KeyName , @Value);"
         );
 
-        using var cmd = new SqlCommand(sql.ToString(), connection);
-        await using var reader = await cmd.ExecuteReaderAsync();
+        using var cmd = new SqlCommand();
+        cmd.Parameters.AddWithValue("ModuleId", translationDto.ModuleId);
+        cmd.Parameters.AddWithValue("LanguageId", translationDto.LanguageId);
+        cmd.Parameters.AddWithValue("KeyName", translationDto.KeyName);
+        cmd.Parameters.AddWithValue("Value", translationDto.Value);
 
-        List<ModuleModel> results = [];
+#if DEBUG
+        Console.WriteLine(sql.ToString());
+#endif
 
-        while (await reader.ReadAsync())
+        cmd.Connection = connection;
+        cmd.CommandText = sql.ToString();
+
+        var rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+        if (rowsAffected <= 0)
         {
-            results.Add(
-                new ModuleModel
-                {
-                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                    Name = reader.GetString(reader.GetOrdinal("Name")),
-                    Slug = reader.GetString(reader.GetOrdinal("Slug")),
-                    Icon = reader.IsDBNull(reader.GetOrdinal("Icon"))
-                        ? null
-                        : reader.GetString(reader.GetOrdinal("Icon")),
-                    Description = reader.IsDBNull(reader.GetOrdinal("Description"))
-                        ? null
-                        : reader.GetString(reader.GetOrdinal("Description")),
-                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                    UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
-                }
+            throw new DataException(
+                nameof(TranslationDataSource) + " Error inserting new translation in the database"
             );
         }
-
-        return results;
-    }
-
-    public async Task<List<LanguageModel>> GetLanguages()
-    {
-        using var connection = new SqlConnection(_config.ConnectionString);
-        await connection.OpenAsync();
-
-        var sql = new StringBuilder(
-            @"
-            SELECT
-                Id,
-                Code,
-                Name,
-                IsActive,
-                CreatedAt,
-                UpdatedAt
-            FROM BTLanguages
-            ORDER BY Name
-            "
-        );
-
-        using var cmd = new SqlCommand(sql.ToString(), connection);
-        await using var reader = await cmd.ExecuteReaderAsync();
-
-        List<LanguageModel> results = [];
-
-        while (await reader.ReadAsync())
-        {
-            results.Add(
-                new LanguageModel
-                {
-                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                    Code = reader.GetString(reader.GetOrdinal("Code")),
-                    Name = reader.GetString(reader.GetOrdinal("Name")),
-                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
-                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                    UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
-                }
-            );
-        }
-
-        return results;
     }
 }
