@@ -1,4 +1,4 @@
-import { TranslationDashboard } from "./pages/TranslationDashboard";
+import { TranslationDashboard } from "./translations/presentation/pages/translation-dashboard";
 import "./index.css";
 
 function App() {
