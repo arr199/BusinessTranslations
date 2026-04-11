@@ -24,7 +24,7 @@ export function Footer({
         <span className="font-bold text-slate-700 dark:text-slate-300">
           {startItem}-{endItem}
         </span>{" "}
-        of {totalItems.toLocaleString()} strings
+        of {totalItems.toLocaleString()} translations
       </div>
 
       <div className="flex items-center gap-4">

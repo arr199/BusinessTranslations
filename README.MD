@@ -108,9 +108,18 @@ npm install
 npm run dev
 ```
 
+### BUGFIXES
+
 ## TODO
 
-### BUGFIXES
+### Architecture
+
+#### Backend
+
+#### Frontend
+
+[ ] - Refactor code to use Zustand for state management instead of prop drilling (e.g. selected module/language, translation list) — will simplify passing data/functions to deeply nested components like TranslationRow and modals
+[ ] - Make sure components are not big and can be reused (e.g. TranslationRow should only be responsible for rendering a row and handling its own edit state, not fetching data or managing global state)
 
 ### Infrastructure
 
@@ -134,7 +143,6 @@ npm run dev
 
 ### UI/UX
 
-- [ ] Toast notifications — replace `alert()` with non-blocking toast popups (success/error)
-- [ ] Empty states — illustrated empty states when no translations or no search results
-- [ ] Keyboard shortcuts — Tab through rows, Enter to save, Escape to cancel
-- [ ] Drag-to-resize columns
+### Security
+
+- [ ] Prompt the model to review the frontend and backend and ensure they follow best practices for security (e.g. input validation, authentication, authorization, error handling). And look for any potential vulnerabilities or attack vectors (e.g. SQL injection, XSS, CSRF) and suggest improvements to mitigate them.

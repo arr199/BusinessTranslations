@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Module, UiLanguage } from "../../domain/types";
+import { MODULE_ICONS } from "../constants/module-icons";
 
 interface SettingsPageProps {
   modules: Module[];
@@ -7,7 +8,10 @@ interface SettingsPageProps {
   onBack: () => void;
   onAddModule: () => void;
   onAddLanguage: () => void;
-  onRenameModule: (moduleId: string, newName: string) => void;
+  onUpdateModule: (
+    moduleId: string,
+    data: { name: string; icon: string },
+  ) => void;
   onRequestDeleteModule: (module: Module) => void;
   onRequestDeleteLanguage: (language: UiLanguage) => void;
 }
@@ -18,7 +22,7 @@ export function SettingsPage({
   onBack,
   onAddModule,
   onAddLanguage,
-  onRenameModule,
+  onUpdateModule,
   onRequestDeleteModule,
   onRequestDeleteLanguage,
 }: SettingsPageProps) {
@@ -29,43 +33,85 @@ export function SettingsPage({
 
   function ModuleRow({ module }: { module: Module }) {
     const [draftName, setDraftName] = useState(module.name);
-    const isChanged = draftName.trim() !== module.name;
+    const [draftIcon, setDraftIcon] = useState(module.icon);
+    const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
+    const isChanged =
+      draftName.trim() !== module.name || draftIcon !== module.icon;
     const isValid = draftName.trim().length > 0;
 
     return (
-      <li className="group flex items-center justify-between gap-3 px-4 py-3">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <span className="material-symbols-outlined text-lg text-slate-500 dark:text-slate-400">
-            {module.icon}
-          </span>
+      <li className="group flex flex-col gap-2 px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={() => setIsIconPickerOpen(!isIconPickerOpen)}
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-primary dark:hover:border-primary transition-colors"
+              title="Change icon"
+            >
+              <span className="material-symbols-outlined text-lg text-slate-500 dark:text-slate-400">
+                {draftIcon}
+              </span>
+            </button>
 
-          <input
-            value={draftName}
-            onChange={(e) => setDraftName(e.target.value)}
-            className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-          />
+            <input
+              value={draftName}
+              onChange={(e) => setDraftName(e.target.value)}
+              className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              disabled={!isChanged || !isValid}
+              onClick={() =>
+                onUpdateModule(module.id, {
+                  name: draftName.trim(),
+                  icon: draftIcon,
+                })
+              }
+              className="px-3 py-2 rounded-lg text-sm font-bold bg-primary hover:bg-primary/90 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Save module"
+            >
+              Save
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onRequestDeleteModule(module)}
+              className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-red-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-red-400 transition-all"
+              title="Delete module"
+            >
+              <span className="material-symbols-outlined text-lg">delete</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            disabled={!isChanged || !isValid}
-            onClick={() => onRenameModule(module.id, draftName.trim())}
-            className="px-3 py-2 rounded-lg text-sm font-bold bg-primary hover:bg-primary/90 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Save module name"
-          >
-            Save
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onRequestDeleteModule(module)}
-            className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-red-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-red-400 transition-all opacity-0 group-hover:opacity-100"
-            title="Delete module"
-          >
-            <span className="material-symbols-outlined text-lg">delete</span>
-          </button>
-        </div>
+        {isIconPickerOpen && (
+          <div className="grid grid-cols-8 gap-1.5 p-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+            {MODULE_ICONS.map((icon) => (
+              <button
+                key={icon}
+                type="button"
+                onClick={() => {
+                  setDraftIcon(icon);
+                  setIsIconPickerOpen(false);
+                }}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  draftIcon === icon
+                    ? "bg-primary text-white"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                }`}
+                title={icon}
+              >
+                <span className="material-symbols-outlined text-lg">
+                  {icon}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </li>
     );
   }
@@ -103,7 +149,7 @@ export function SettingsPage({
                     Modules
                   </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Rename modules or delete them.
+                    Rename modules, change icons, or delete them.
                   </p>
                 </div>
 
@@ -181,7 +227,7 @@ export function SettingsPage({
 
                     <button
                       onClick={() => onRequestDeleteLanguage(language)}
-                      className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-red-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-red-400 transition-all opacity-0 group-hover:opacity-100"
+                      className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-red-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-red-400 transition-all"
                       title="Delete language"
                     >
                       <span className="material-symbols-outlined text-lg">

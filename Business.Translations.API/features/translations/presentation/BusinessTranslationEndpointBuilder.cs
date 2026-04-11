@@ -9,26 +9,38 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Logging;
 
 namespace Business.Translations.Endpoints;
 
 public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBuilder
 {
-    public static void RegisterEndpoints(WebApplication app, BTConfiguration config)
+    public static void RegisterEndpoints(WebApplication app, BTConfiguration config, ILogger logger)
     {
-        AddStaticFiles(app, config);
-        AddDashboardEndpoint(app, config);
-        AddCreateTablesEndpoint(app, config);
-        AddTranslationsEndpoints(app, config);
-        AddModulesEndpoints(app, config);
-        AddLanguagesEndpoints(app, config);
+        AddStaticFiles(app, config, logger);
+        AddDashboardEndpoint(app, config, logger);
+        AddCreateTablesEndpoint(app, config, logger);
+        AddTranslationsEndpoints(app, config, logger);
+        AddModulesEndpoints(app, config, logger);
+        AddLanguagesEndpoints(app, config, logger);
+
+        logger.LogInformation(
+            "Business.Translations endpoints registered at /{BasePath}",
+            config.BasePath
+        );
     }
 
-    public static void AddStaticFiles(WebApplication app, BTConfiguration config)
+    public static void AddStaticFiles(WebApplication app, BTConfiguration config, ILogger logger)
     {
         var distPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "dist");
         if (!Directory.Exists(distPath))
+        {
+            logger.LogWarning(
+                "Dashboard dist folder not found at {DistPath} — static files will not be served",
+                distPath
+            );
             return;
+        }
 
         app.UseStaticFiles(
             new StaticFileOptions
@@ -39,7 +51,11 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
         );
     }
 
-    public static void AddDashboardEndpoint(WebApplication app, BTConfiguration config)
+    public static void AddDashboardEndpoint(
+        WebApplication app,
+        BTConfiguration config,
+        ILogger logger
+    )
     {
         app.MapGet(
             $"{config.BasePath}/dashboard",
@@ -52,6 +68,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 );
                 if (!File.Exists(path))
                 {
+                    logger.LogWarning("Dashboard index.html not found at {Path}", path);
                     context.Response.StatusCode = 404;
                     return;
                 }
@@ -61,7 +78,11 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
     }
 
     // ─── Tables ─────────────────────────────────────────────────────
-    private static void AddCreateTablesEndpoint(WebApplication app, BTConfiguration config)
+    private static void AddCreateTablesEndpoint(
+        WebApplication app,
+        BTConfiguration config,
+        ILogger logger
+    )
     {
         var ds = new TranslationDataSource(config);
 
@@ -71,13 +92,16 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
             {
                 try
                 {
+                    logger.LogInformation("Creating database tables...");
                     await ds.CreateTablesAsync();
+                    logger.LogInformation("Database tables created successfully");
                     return Results.Ok(
                         new ApiResponse { Success = true, Message = "Tables created successfully." }
                     );
                 }
                 catch (Exception ex)
                 {
+                    logger.LogError(ex, "Failed to create database tables");
                     return Results.Json(
                         new ApiResponse
                         {
@@ -93,7 +117,11 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
     }
 
     // ─── Translations ───────────────────────────────────────────────
-    public static void AddTranslationsEndpoints(WebApplication app, BTConfiguration config)
+    public static void AddTranslationsEndpoints(
+        WebApplication app,
+        BTConfiguration config,
+        ILogger logger
+    )
     {
         var ds = new TranslationDataSource(config);
         var basePath = config.BasePath;
@@ -106,6 +134,11 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 {
                     await ValidationService.ValidateAsync(filters);
                     var (items, totalCount) = await ds.GetTranslationsAsync(filters);
+                    logger.LogDebug(
+                        "Fetched {Count}/{Total} translations",
+                        items.Count,
+                        totalCount
+                    );
                     return Results.Ok(
                         new GetTranslationResponse
                         {
@@ -118,6 +151,10 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (ValidationException ex)
                 {
+                    logger.LogWarning(
+                        "Validation failed fetching translations: {Message}",
+                        ex.Message
+                    );
                     return Results.Json(
                         new ApiResponse { Success = false, Message = ex.Message },
                         statusCode: 400
@@ -125,6 +162,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (Exception ex)
                 {
+                    logger.LogError(ex, "Error fetching translations");
                     return Results.Json(
                         new ApiResponse
                         {
@@ -146,6 +184,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 {
                     await ValidationService.ValidateAsync(body);
                     await ds.InsertTranslationAsync(body);
+                    logger.LogInformation("Translation created — Key={Key}", body.KeyName);
                     return Results.Created(
                         $"/{basePath}/translations",
                         new ApiResponse
@@ -157,6 +196,10 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (ValidationException ex)
                 {
+                    logger.LogWarning(
+                        "Validation failed creating translation: {Message}",
+                        ex.Message
+                    );
                     return Results.Json(
                         new ApiResponse { Success = false, Message = ex.Message },
                         statusCode: 400
@@ -164,6 +207,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (Exception ex)
                 {
+                    logger.LogError(ex, "Error creating translation");
                     return Results.Json(
                         new ApiResponse
                         {
@@ -185,6 +229,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 {
                     await ValidationService.ValidateAsync(body);
                     await ds.UpdateTranslationAsync(id, body);
+                    logger.LogInformation("Translation {Id} updated", id);
                     return Results.Ok(
                         new ApiResponse
                         {
@@ -195,6 +240,11 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (ValidationException ex)
                 {
+                    logger.LogWarning(
+                        "Validation failed updating translation {Id}: {Message}",
+                        id,
+                        ex.Message
+                    );
                     return Results.Json(
                         new ApiResponse { Success = false, Message = ex.Message },
                         statusCode: 400
@@ -202,6 +252,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (DataException)
                 {
+                    logger.LogWarning("Translation {Id} not found for update", id);
                     return Results.NotFound(
                         new ApiResponse
                         {
@@ -212,6 +263,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (Exception ex)
                 {
+                    logger.LogError(ex, "Error updating translation {Id}", id);
                     return Results.Json(
                         new ApiResponse
                         {
@@ -232,6 +284,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 try
                 {
                     await ds.DeleteTranslationAsync(id);
+                    logger.LogInformation("Translation {Id} deleted", id);
                     return Results.Ok(
                         new ApiResponse
                         {
@@ -242,6 +295,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (DataException)
                 {
+                    logger.LogWarning("Translation {Id} not found for deletion", id);
                     return Results.NotFound(
                         new ApiResponse
                         {
@@ -252,6 +306,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (Exception ex)
                 {
+                    logger.LogError(ex, "Error deleting translation {Id}", id);
                     return Results.Json(
                         new ApiResponse
                         {
@@ -267,7 +322,11 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
     }
 
     // ─── Modules ────────────────────────────────────────────────────
-    public static void AddModulesEndpoints(WebApplication app, BTConfiguration config)
+    public static void AddModulesEndpoints(
+        WebApplication app,
+        BTConfiguration config,
+        ILogger logger
+    )
     {
         var ds = new ModuleDataSource(config);
         var basePath = config.BasePath;
@@ -279,6 +338,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 try
                 {
                     var data = await ds.GetModulesAsync();
+                    logger.LogDebug("Fetched {Count} modules", data.Count);
                     return Results.Ok(
                         new GetModulesResponse
                         {
@@ -290,6 +350,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (Exception ex)
                 {
+                    logger.LogError(ex, "Error fetching modules");
                     return Results.Json(
                         new ApiResponse
                         {
@@ -311,6 +372,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 {
                     await ValidationService.ValidateAsync(body);
                     await ds.InsertModuleAsync(body);
+                    logger.LogInformation("Module created — Name={Name}", body.Name);
                     return Results.Created(
                         $"/{basePath}/modules",
                         new ApiResponse { Success = true, Message = "Module created successfully." }
@@ -318,6 +380,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (ValidationException ex)
                 {
+                    logger.LogWarning("Validation failed creating module: {Message}", ex.Message);
                     return Results.Json(
                         new ApiResponse { Success = false, Message = ex.Message },
                         statusCode: 400
@@ -325,6 +388,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (Exception ex)
                 {
+                    logger.LogError(ex, "Error creating module");
                     return Results.Json(
                         new ApiResponse
                         {
@@ -346,12 +410,18 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 {
                     await ValidationService.ValidateAsync(body);
                     await ds.UpdateModuleAsync(id, body);
+                    logger.LogInformation("Module {Id} updated", id);
                     return Results.Ok(
                         new ApiResponse { Success = true, Message = "Module updated successfully." }
                     );
                 }
                 catch (ValidationException ex)
                 {
+                    logger.LogWarning(
+                        "Validation failed updating module {Id}: {Message}",
+                        id,
+                        ex.Message
+                    );
                     return Results.Json(
                         new ApiResponse { Success = false, Message = ex.Message },
                         statusCode: 400
@@ -359,12 +429,14 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (DataException)
                 {
+                    logger.LogWarning("Module {Id} not found for update", id);
                     return Results.NotFound(
                         new ApiResponse { Success = false, Message = $"Module {id} not found." }
                     );
                 }
                 catch (Exception ex)
                 {
+                    logger.LogError(ex, "Error updating module {Id}", id);
                     return Results.Json(
                         new ApiResponse
                         {
@@ -385,18 +457,21 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 try
                 {
                     await ds.DeleteModuleAsync(id);
+                    logger.LogInformation("Module {Id} deleted", id);
                     return Results.Ok(
                         new ApiResponse { Success = true, Message = "Module deleted successfully." }
                     );
                 }
                 catch (DataException)
                 {
+                    logger.LogWarning("Module {Id} not found for deletion", id);
                     return Results.NotFound(
                         new ApiResponse { Success = false, Message = $"Module {id} not found." }
                     );
                 }
                 catch (Exception ex)
                 {
+                    logger.LogError(ex, "Error deleting module {Id}", id);
                     return Results.Json(
                         new ApiResponse
                         {
@@ -412,7 +487,11 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
     }
 
     // ─── Languages ──────────────────────────────────────────────────
-    public static void AddLanguagesEndpoints(WebApplication app, BTConfiguration config)
+    public static void AddLanguagesEndpoints(
+        WebApplication app,
+        BTConfiguration config,
+        ILogger logger
+    )
     {
         var ds = new LanguageDataSource(config);
         var basePath = config.BasePath;
@@ -424,6 +503,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 try
                 {
                     var data = await ds.GetLanguagesAsync();
+                    logger.LogDebug("Fetched {Count} languages", data.Count);
                     return Results.Ok(
                         new GetLanguagesResponse
                         {
@@ -435,6 +515,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (Exception ex)
                 {
+                    logger.LogError(ex, "Error fetching languages");
                     return Results.Json(
                         new ApiResponse
                         {
@@ -456,6 +537,11 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 {
                     await ValidationService.ValidateAsync(body);
                     await ds.InsertLanguageAsync(body);
+                    logger.LogInformation(
+                        "Language created — Code={Code}, Name={Name}",
+                        body.Code,
+                        body.Name
+                    );
                     return Results.Created(
                         $"/{basePath}/languages",
                         new ApiResponse
@@ -467,6 +553,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (ValidationException ex)
                 {
+                    logger.LogWarning("Validation failed creating language: {Message}", ex.Message);
                     return Results.Json(
                         new ApiResponse { Success = false, Message = ex.Message },
                         statusCode: 400
@@ -474,6 +561,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (Exception ex)
                 {
+                    logger.LogError(ex, "Error creating language");
                     return Results.Json(
                         new ApiResponse
                         {
@@ -495,6 +583,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 {
                     await ValidationService.ValidateAsync(body);
                     await ds.UpdateLanguageAsync(id, body);
+                    logger.LogInformation("Language {Id} updated", id);
                     return Results.Ok(
                         new ApiResponse
                         {
@@ -505,6 +594,11 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (ValidationException ex)
                 {
+                    logger.LogWarning(
+                        "Validation failed updating language {Id}: {Message}",
+                        id,
+                        ex.Message
+                    );
                     return Results.Json(
                         new ApiResponse { Success = false, Message = ex.Message },
                         statusCode: 400
@@ -512,12 +606,14 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (DataException)
                 {
+                    logger.LogWarning("Language {Id} not found for update", id);
                     return Results.NotFound(
                         new ApiResponse { Success = false, Message = $"Language {id} not found." }
                     );
                 }
                 catch (Exception ex)
                 {
+                    logger.LogError(ex, "Error updating language {Id}", id);
                     return Results.Json(
                         new ApiResponse
                         {
@@ -538,6 +634,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 try
                 {
                     await ds.DeleteLanguageAsync(id);
+                    logger.LogInformation("Language {Id} deleted", id);
                     return Results.Ok(
                         new ApiResponse
                         {
@@ -548,12 +645,14 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
                 catch (DataException)
                 {
+                    logger.LogWarning("Language {Id} not found for deletion", id);
                     return Results.NotFound(
                         new ApiResponse { Success = false, Message = $"Language {id} not found." }
                     );
                 }
                 catch (Exception ex)
                 {
+                    logger.LogError(ex, "Error deleting language {Id}", id);
                     return Results.Json(
                         new ApiResponse
                         {

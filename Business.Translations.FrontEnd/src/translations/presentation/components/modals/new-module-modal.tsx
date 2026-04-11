@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Modal } from "./modal";
+import { MODULE_ICONS } from "../../constants/module-icons";
 
 interface NewModuleModalProps {
   isOpen: boolean;
@@ -16,25 +17,6 @@ export function NewModuleModal({
     name: "",
     icon: "extension",
   });
-
-  const popularIcons = [
-    "extension",
-    "apps",
-    "lock",
-    "public",
-    "dashboard",
-    "settings",
-    "mail",
-    "shopping_cart",
-    "receipt_long",
-    "folder",
-    "book",
-    "language",
-    "code",
-    "database",
-    "cloud",
-    "storage",
-  ];
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -66,7 +48,7 @@ export function NewModuleModal({
             Icon
           </label>
           <div className="grid grid-cols-8 gap-2 p-4 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800/50 max-h-48 overflow-y-auto">
-            {popularIcons.map((icon) => (
+            {MODULE_ICONS.map((icon) => (
               <button
                 key={icon}
                 type="button"

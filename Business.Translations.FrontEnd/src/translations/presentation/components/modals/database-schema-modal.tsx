@@ -3,7 +3,7 @@ import { Modal } from "./modal";
 import {
   DATABASE_SCHEMAS,
   COMPLETE_SQL_SCRIPT,
-} from "../../constants/databaseSchema";
+} from "../../constants/database-schema";
 
 interface DatabaseSchemaModalProps {
   isOpen: boolean;

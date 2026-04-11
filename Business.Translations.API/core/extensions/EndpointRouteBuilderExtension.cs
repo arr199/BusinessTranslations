@@ -2,6 +2,8 @@ using Business.Translations.Configuration;
 using Business.Translations.Endpoints;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Business.Translations.Extensions;
 
@@ -12,6 +14,10 @@ public static class UseBusinessTranslationsExtension
         Action<BTConfiguration>? configureOptions = null
     )
     {
+        var logger = app
+            .Services.GetRequiredService<ILoggerFactory>()
+            .CreateLogger("Business.Translations");
+
         BTConfiguration configuration = new();
 
         configureOptions?.Invoke(configuration);
@@ -23,7 +29,13 @@ public static class UseBusinessTranslationsExtension
             );
         }
 
-        BusinessTranslationEndpointBuilder.RegisterEndpoints(app, configuration);
+        logger.LogInformation(
+            "Business.Translations initialized — Provider={Provider}, BasePath=/{BasePath}",
+            configuration.Provider,
+            configuration.BasePath
+        );
+
+        BusinessTranslationEndpointBuilder.RegisterEndpoints(app, configuration, logger);
 
         return app;
     }

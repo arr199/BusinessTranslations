@@ -3,7 +3,7 @@
  * Handles database schema migration operations
  */
 
-import { COMPLETE_SQL_SCRIPT } from "../presentation/constants/databaseSchema";
+import { COMPLETE_SQL_SCRIPT } from "../presentation/constants/database-schema";
 
 export interface MigrationResponse {
   success: boolean;

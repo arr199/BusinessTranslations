@@ -220,18 +220,13 @@ export const useTranslationStore = create<TranslationStore>((set) => ({
     }
   },
 
-  deleteLanguage: async (code) => {
+  deleteLanguage: async (id) => {
     set({ error: null });
     try {
-      await languagesDataSource.delete(code);
-
-      set((state) => ({
-        languages: state.languages.filter((l) => l.code !== code),
-        translations: state.translations.filter((t) => t.languageCode !== code),
-        selectedLanguage:
-          state.selectedLanguage === code ? "all" : state.selectedLanguage,
-        currentPage: 1,
-      }));
+      await languagesDataSource.delete(id);
+      set({ selectedLanguage: "all", currentPage: 1 });
+      await useTranslationStore.getState().fetchLanguages();
+      await useTranslationStore.getState().fetchTranslations();
     } catch (error) {
       set({
         error:
@@ -292,7 +287,7 @@ interface TranslationStore {
   // Language actions
   fetchLanguages: () => Promise<void>;
   createLanguage: (language: { code: string; name: string }) => Promise<void>;
-  deleteLanguage: (code: string) => Promise<void>;
+  deleteLanguage: (id: string) => Promise<void>;
 
   // Filter actions
   setSearchValue: (value: string) => void;

@@ -1,47 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Translation } from "../../domain/types";
 
 interface TranslationRowProps {
   translation: Translation;
   onEdit?: (id: string, value: string) => void;
-  onStatusChange?: (id: string, status: Translation["status"]) => void;
   onDelete?: (id: string, key: string) => void;
 }
-
-const STATUS_CYCLE: Translation["status"][] = [
-  "pending",
-  "verified",
-  "missing",
-];
-
-const STATUS_CONFIG: Record<
-  Translation["status"],
-  { color: string; bg: string; label: string }
-> = {
-  verified: {
-    color: "text-emerald-700 dark:text-emerald-400",
-    bg: "bg-emerald-100 dark:bg-emerald-900/30",
-    label: "Verified",
-  },
-  pending: {
-    color: "text-slate-600 dark:text-slate-400",
-    bg: "bg-slate-100 dark:bg-slate-700/50",
-    label: "Pending",
-  },
-  missing: {
-    color: "text-amber-700 dark:text-amber-400",
-    bg: "bg-amber-100 dark:bg-amber-900/30",
-    label: "Missing",
-  },
-};
 
 export function TranslationRow({
   translation,
   onEdit,
-  onStatusChange,
   onDelete,
 }: TranslationRowProps) {
   const [value, setValue] = useState(translation.value);
+  const cancelRef = useRef(false);
 
   useEffect(() => {
     setValue(translation.value);
@@ -59,17 +31,30 @@ export function TranslationRow({
   };
 
   const isMissing = translation.status === "missing";
-  const status = STATUS_CONFIG[translation.status] ?? STATUS_CONFIG.pending;
 
-  const handleStatusClick = () => {
-    const currentIdx = STATUS_CYCLE.indexOf(translation.status);
-    const next = STATUS_CYCLE[(currentIdx + 1) % STATUS_CYCLE.length];
-    onStatusChange?.(translation.id, next);
+  const save = () => {
+    if (value !== translation.value) {
+      onEdit?.(translation.id, value);
+    }
   };
 
   const handleBlur = () => {
-    if (value !== translation.value) {
-      onEdit?.(translation.id, value);
+    if (cancelRef.current) {
+      cancelRef.current = false;
+      return;
+    }
+    save();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      e.currentTarget.blur();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      cancelRef.current = true;
+      setValue(translation.value);
+      e.currentTarget.blur();
     }
   };
 
@@ -116,22 +101,13 @@ export function TranslationRow({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
           placeholder={isMissing ? "Translate this key..." : ""}
         />
       </td>
 
-      <td className="px-6 py-4 text-center">
-        <button
-          onClick={handleStatusClick}
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium cursor-pointer transition-colors hover:opacity-80 ${status.bg} ${status.color}`}
-          title={`Click to change status (current: ${status.label})`}
-        >
-          {status.label}
-        </button>
-      </td>
-
       <td className="px-6 py-4 text-right">
-        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center justify-end gap-1">
           <button
             onClick={() => onDelete?.(translation.id, translation.keyName)}
             className="p-1.5 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"

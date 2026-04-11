@@ -20,14 +20,25 @@ import { useTranslationStore } from "../stateManagement/translation-store";
 import { useInitializeData } from "../hooks/use-Initialize-data";
 import { runMigration } from "../../data/migration-service";
 import { SettingsPage } from "./settings-page";
+import { ToastContainer, toast } from "../components/toast";
 import type { Translation } from "../../domain/types";
 
 export function TranslationDashboard() {
   const [isDarkMode, toggleDarkMode] = useDarkMode();
 
-  const [activeView, setActiveView] = useState<"dashboard" | "settings">(
-    "dashboard",
+  const [activeView, setActiveView] = useState<"dashboard" | "settings">(() =>
+    window.location.hash === "#settings" ? "settings" : "dashboard",
   );
+
+  useEffect(() => {
+    const onHashChange = () => {
+      setActiveView(
+        window.location.hash === "#settings" ? "settings" : "dashboard",
+      );
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
 
   // Modal states
   const [deleteModal, setDeleteModal] = useState<{
@@ -50,9 +61,9 @@ export function TranslationDashboard() {
   }>({ isOpen: false, id: "", name: "" });
   const [deleteLanguageModal, setDeleteLanguageModal] = useState<{
     isOpen: boolean;
-    code: string;
+    id: string;
     name: string;
-  }>({ isOpen: false, code: "", name: "" });
+  }>({ isOpen: false, id: "", name: "" });
 
   // Initialize data from API or mock
   const {
@@ -152,8 +163,11 @@ export function TranslationDashboard() {
     fetchTranslations,
   ]);
 
-  const openSettings = () => setActiveView("settings");
-  const backToDashboard = () => setActiveView("dashboard");
+  const openSettings = () => (window.location.hash = "settings");
+  const backToDashboard = () => {
+    history.replaceState(null, "", window.location.pathname);
+    setActiveView("dashboard");
+  };
 
   const handleSelectModule = (module: string) => {
     setSelectedModule(module);
@@ -161,6 +175,15 @@ export function TranslationDashboard() {
   };
 
   // Modal handlers
+  const handleEdit = async (id: string, value: string) => {
+    try {
+      await updateTranslation(id, value);
+      toast.success("Translation updated.");
+    } catch {
+      toast.error("Failed to update translation.");
+    }
+  };
+
   const handleDelete = (id: string, key: string) => {
     setDeleteModal({ isOpen: true, id, key });
   };
@@ -169,8 +192,9 @@ export function TranslationDashboard() {
     try {
       await deleteTranslation(deleteModal.id);
       setDeleteModal({ isOpen: false, id: "", key: "" });
-    } catch (error) {
-      console.error("Failed to delete translation:", error);
+      toast.success("Translation deleted.");
+    } catch {
+      toast.error("Failed to delete translation.");
     }
   };
 
@@ -178,17 +202,19 @@ export function TranslationDashboard() {
     try {
       await deleteModule(deleteModuleModal.id);
       setDeleteModuleModal({ isOpen: false, id: "", name: "" });
-    } catch (error) {
-      console.error("Failed to delete module:", error);
+      toast.success("Module deleted.");
+    } catch {
+      toast.error("Failed to delete module.");
     }
   };
 
   const confirmDeleteLanguage = async () => {
     try {
-      await deleteLanguage(deleteLanguageModal.code);
-      setDeleteLanguageModal({ isOpen: false, code: "", name: "" });
-    } catch (error) {
-      console.error("Failed to delete language:", error);
+      await deleteLanguage(deleteLanguageModal.id);
+      setDeleteLanguageModal({ isOpen: false, id: "", name: "" });
+      toast.success("Language deleted.");
+    } catch {
+      toast.error("Failed to delete language.");
     }
   };
 
@@ -205,8 +231,9 @@ export function TranslationDashboard() {
         moduleId: data.moduleId,
       });
       setIsNewTranslationOpen(false);
-    } catch (error) {
-      console.error("Failed to create translation:", error);
+      toast.success("Translation created.");
+    } catch {
+      toast.error("Failed to create translation.");
     }
   };
 
@@ -217,8 +244,9 @@ export function TranslationDashboard() {
         name: data.name,
       });
       setIsNewLanguageOpen(false);
-    } catch (error) {
-      console.error("Failed to create language:", error);
+      toast.success(`Language "${data.name}" added.`);
+    } catch {
+      toast.error("Failed to create language.");
     }
   };
 
@@ -230,8 +258,9 @@ export function TranslationDashboard() {
         isActive: false,
       });
       setIsNewModuleOpen(false);
-    } catch (error) {
-      console.error("Failed to create module:", error);
+      toast.success(`Module "${data.name}" created.`);
+    } catch {
+      toast.error("Failed to create module.");
     }
   };
 
@@ -243,12 +272,12 @@ export function TranslationDashboard() {
         setIsSchemaModalOpen(false);
         await Promise.all([fetchModules(), fetchLanguages()]);
         await fetchTranslations();
+        toast.success("Database tables created successfully.");
       } else {
-        alert(`Migration failed: ${result.message}`);
+        toast.error(`Migration failed: ${result.message}`);
       }
-    } catch (error) {
-      console.error("Migration error:", error);
-      alert("Migration failed. Check console for details.");
+    } catch {
+      toast.error("Migration failed. Check console for details.");
     }
   };
 
@@ -325,12 +354,14 @@ export function TranslationDashboard() {
           ) : (
             <TranslationTable
               translations={translations}
-              onEdit={updateTranslation}
-              onStatusChange={(id, status) => {
-                const t = translations.find((t) => t.id === id);
-                if (t) updateTranslation(id, t.value, status);
-              }}
+              hasActiveFilters={
+                searchValue !== "" ||
+                selectedLanguage !== "all" ||
+                selectedModule !== "all"
+              }
+              onEdit={handleEdit}
               onDelete={handleDelete}
+              onAddTranslation={() => setIsNewTranslationOpen(true)}
             />
           )}
 
@@ -349,11 +380,12 @@ export function TranslationDashboard() {
           onBack={backToDashboard}
           onAddModule={() => setIsNewModuleOpen(true)}
           onAddLanguage={() => setIsNewLanguageOpen(true)}
-          onRenameModule={async (moduleId, newName) => {
+          onUpdateModule={async (moduleId, data) => {
             try {
-              await updateModule(moduleId, { name: newName });
-            } catch (error) {
-              console.error("Failed to update module:", error);
+              await updateModule(moduleId, data);
+              toast.success("Module updated.");
+            } catch {
+              toast.error("Failed to update module.");
             }
           }}
           onRequestDeleteModule={(module) =>
@@ -366,7 +398,7 @@ export function TranslationDashboard() {
           onRequestDeleteLanguage={(language) =>
             setDeleteLanguageModal({
               isOpen: true,
-              code: language.code,
+              id: language.id,
               name: language.name,
             })
           }
@@ -411,10 +443,10 @@ export function TranslationDashboard() {
       <DeleteConfirmModal
         isOpen={deleteLanguageModal.isOpen}
         onClose={() =>
-          setDeleteLanguageModal({ isOpen: false, code: "", name: "" })
+          setDeleteLanguageModal({ isOpen: false, id: "", name: "" })
         }
         onConfirm={confirmDeleteLanguage}
-        itemName={`${deleteLanguageModal.code} — ${deleteLanguageModal.name}`}
+        itemName={deleteLanguageModal.name}
         title="Delete Language"
         prompt="Are you sure you want to delete this language?"
       />
@@ -429,6 +461,8 @@ export function TranslationDashboard() {
         prompt="This will permanently delete the module and may remove related translations."
         requiredText={deleteModuleModal.name}
       />
+
+      <ToastContainer />
     </div>
   );
 }
