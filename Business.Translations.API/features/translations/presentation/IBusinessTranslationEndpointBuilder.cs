@@ -1,5 +1,6 @@
 using Business.Translations.Configuration;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 
 namespace Business.Translations.Endpoints;
@@ -13,22 +14,22 @@ public interface IBusinessTranslationEndpointBuilder
     );
     static abstract void AddStaticFiles(WebApplication app, BTConfiguration config, ILogger logger);
     static abstract void AddDashboardEndpoint(
-        WebApplication app,
+        IEndpointRouteBuilder endpoints,
         BTConfiguration config,
         ILogger logger
     );
     static abstract void AddTranslationsEndpoints(
-        WebApplication app,
+        IEndpointRouteBuilder endpoints,
         BTConfiguration config,
         ILogger logger
     );
     static abstract void AddModulesEndpoints(
-        WebApplication app,
+        IEndpointRouteBuilder endpoints,
         BTConfiguration config,
         ILogger logger
     );
     static abstract void AddLanguagesEndpoints(
-        WebApplication app,
+        IEndpointRouteBuilder endpoints,
         BTConfiguration config,
         ILogger logger
     );

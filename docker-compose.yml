@@ -1,0 +1,22 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "YourStr0ng!Pass"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          '/opt/mssql-tools2/bin/sqlcmd -S localhost -U sa -P "YourStr0ng!Pass" -Q "SELECT 1" -b',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  sqldata:

@@ -20,6 +20,39 @@ app.UseBusinessTranslations(config =>
 app.Run();
 ```
 
+### Authorization
+
+Protect all BT endpoints (dashboard + API) by providing your own `IEndpointFilter`:
+
+```csharp
+// 1. Create your filter
+public class MyAuthFilter : IEndpointFilter
+{
+    public async ValueTask<object?> InvokeAsync(
+        EndpointFilterInvocationContext context,
+        EndpointFilterDelegate next)
+    {
+        var user = context.HttpContext.User;
+
+        if (user.Identity?.IsAuthenticated != true || !user.IsInRole("Admin"))
+        {
+            return Results.Json(
+                new { success = false, message = "Unauthorized." },
+                statusCode: StatusCodes.Status401Unauthorized);
+        }
+
+        return await next(context);
+    }
+}
+
+// 2. Register it
+app.UseBusinessTranslations(config =>
+{
+    config.UseSqlServer("your-connection-string")
+          .UseAuthorizationFilter(new MyAuthFilter());
+});
+```
+
 Then navigate to `/bt/dashboard` in your browser to manage translations.
 
 ### Initialize the Database
@@ -34,6 +67,8 @@ Send a POST to `/bt/createTables` to create the required tables (`BTLanguages`, 
 - **Configurable base path** — all endpoints scoped under `/{basePath}/`
 - **FluentValidation** on all request DTOs
 - **Proper HTTP status codes** — 400 for validation, 404 for not found, 500 for server errors
+- **Configurable authorization** — `config.UseAuthorizationFilter(myFilter)` with your own `IEndpointFilter` implementation
+- **Docker compose** — `docker compose up` for a local SQL Server database
 
 ## API Endpoints
 
@@ -108,9 +143,27 @@ npm install
 npm run dev
 ```
 
-### BUGFIXES
+### Docker
+
+Spin up a local SQL Server database:
+
+```bash
+docker compose up
+```
+
+SQL Server will be available at `localhost:1433` (sa / `YourStr0ng!Pass`).
+
+To stop and clean up:
+
+```bash
+docker compose down        # keep data
+docker compose down -v     # remove data volume too
+```
 
 ## TODO
+
+- [x] Add configurable authorization filter to protect API endpoints and dashboard
+- [x] Dockerfile/docker-compose for running the API and a database in containers
 
 ### Architecture
 
@@ -118,19 +171,13 @@ npm run dev
 
 #### Frontend
 
-[ ] - Refactor code to use Zustand for state management instead of prop drilling (e.g. selected module/language, translation list) — will simplify passing data/functions to deeply nested components like TranslationRow and modals
-[ ] - Make sure components are not big and can be reused (e.g. TranslationRow should only be responsible for rendering a row and handling its own edit state, not fetching data or managing global state)
-
 ### Infrastructure
 
-- [ ] Add auth filter / middleware to protect API endpoints (e.g. API key, JWT)
 - [ ] Add unit tests
-- [ ] Dockerfile/docker-compose for running the API and a database in a containerized environment for development/testing
 - [ ] Add more DB providers (SQLite, PostgreSQL)
 - [ ] Add entity framework to abstract away database access and make it easier to support multiple providers in the future
 - [ ] CI/CD pipeline for running tests and publishing to NuGet
 - [ ] API version
-- [ ] CORS policy for the API (allow dashboard frontend, restrict others)
 
 ### Features
 
@@ -139,7 +186,6 @@ npm run dev
 - [ ] Export/import translations (JSON, CSV)
 - [ ] Bulk actions — checkboxes to delete/change status of multiple rows at once
 - [ ] Filter by status in the filter bar (show only missing, pending, verified)
-- [ ] Translation completeness bar — per-module/per-language progress (% verified vs pending vs missing)
 
 ### UI/UX
 

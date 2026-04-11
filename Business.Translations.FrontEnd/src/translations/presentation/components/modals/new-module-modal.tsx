@@ -66,9 +66,6 @@ export function NewModuleModal({
               </button>
             ))}
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Selected: {formData.icon}
-          </p>
         </div>
 
         <div className="flex gap-3 justify-end pt-2">

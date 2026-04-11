@@ -8,6 +8,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 
@@ -18,11 +19,16 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
     public static void RegisterEndpoints(WebApplication app, BTConfiguration config, ILogger logger)
     {
         AddStaticFiles(app, config, logger);
-        AddDashboardEndpoint(app, config, logger);
-        AddCreateTablesEndpoint(app, config, logger);
-        AddTranslationsEndpoints(app, config, logger);
-        AddModulesEndpoints(app, config, logger);
-        AddLanguagesEndpoints(app, config, logger);
+
+        var group = app.MapGroup(config.BasePath);
+
+        if (config.AuthorizationFilter is not null)
+            group.AddEndpointFilter(config.AuthorizationFilter);
+
+        AddDashboardEndpoint(group, config, logger);
+        AddTranslationsEndpoints(group, config, logger);
+        AddModulesEndpoints(group, config, logger);
+        AddLanguagesEndpoints(group, config, logger);
 
         logger.LogInformation(
             "Business.Translations endpoints registered at /{BasePath}",
@@ -52,13 +58,13 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
     }
 
     public static void AddDashboardEndpoint(
-        WebApplication app,
+        IEndpointRouteBuilder endpoints,
         BTConfiguration config,
         ILogger logger
     )
     {
-        app.MapGet(
-            $"{config.BasePath}/dashboard",
+        endpoints.MapGet(
+            "dashboard",
             async (HttpContext context) =>
             {
                 var path = Path.Combine(
@@ -75,19 +81,11 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 await context.Response.SendFileAsync(path);
             }
         );
-    }
 
-    // ─── Tables ─────────────────────────────────────────────────────
-    private static void AddCreateTablesEndpoint(
-        WebApplication app,
-        BTConfiguration config,
-        ILogger logger
-    )
-    {
         var ds = new TranslationDataSource(config);
 
-        app.MapPost(
-            $"{config.BasePath}/createTables",
+        endpoints.MapPost(
+            "createTables",
             async () =>
             {
                 try
@@ -118,7 +116,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
 
     // ─── Translations ───────────────────────────────────────────────
     public static void AddTranslationsEndpoints(
-        WebApplication app,
+        IEndpointRouteBuilder endpoints,
         BTConfiguration config,
         ILogger logger
     )
@@ -126,8 +124,8 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
         var ds = new TranslationDataSource(config);
         var basePath = config.BasePath;
 
-        app.MapGet(
-            $"{basePath}/translations",
+        endpoints.MapGet(
+            "translations",
             async ([AsParameters] GetTranslationRequest filters) =>
             {
                 try
@@ -176,8 +174,8 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
             }
         );
 
-        app.MapPost(
-            $"{basePath}/translations",
+        endpoints.MapPost(
+            "translations",
             async ([FromBody] InsertTranslationRequest body) =>
             {
                 try
@@ -221,8 +219,8 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
             }
         );
 
-        app.MapPut(
-            $"{basePath}/translations/{{id:int}}",
+        endpoints.MapPut(
+            "translations/{id:int}",
             async (int id, [FromBody] UpdateTranslationRequest body) =>
             {
                 try
@@ -277,8 +275,8 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
             }
         );
 
-        app.MapDelete(
-            $"{basePath}/translations/{{id:int}}",
+        endpoints.MapDelete(
+            "translations/{id:int}",
             async (int id) =>
             {
                 try
@@ -323,7 +321,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
 
     // ─── Modules ────────────────────────────────────────────────────
     public static void AddModulesEndpoints(
-        WebApplication app,
+        IEndpointRouteBuilder endpoints,
         BTConfiguration config,
         ILogger logger
     )
@@ -331,8 +329,8 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
         var ds = new ModuleDataSource(config);
         var basePath = config.BasePath;
 
-        app.MapGet(
-            $"{basePath}/modules",
+        endpoints.MapGet(
+            "modules",
             async () =>
             {
                 try
@@ -364,8 +362,8 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
             }
         );
 
-        app.MapPost(
-            $"{basePath}/modules",
+        endpoints.MapPost(
+            "modules",
             async ([FromBody] InsertModuleRequest body) =>
             {
                 try
@@ -402,8 +400,8 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
             }
         );
 
-        app.MapPut(
-            $"{basePath}/modules/{{id:int}}",
+        endpoints.MapPut(
+            "modules/{id:int}",
             async (int id, [FromBody] UpdateModuleRequest body) =>
             {
                 try
@@ -450,8 +448,8 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
             }
         );
 
-        app.MapDelete(
-            $"{basePath}/modules/{{id:int}}",
+        endpoints.MapDelete(
+            "modules/{id:int}",
             async (int id) =>
             {
                 try
@@ -488,7 +486,7 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
 
     // ─── Languages ──────────────────────────────────────────────────
     public static void AddLanguagesEndpoints(
-        WebApplication app,
+        IEndpointRouteBuilder endpoints,
         BTConfiguration config,
         ILogger logger
     )
@@ -496,8 +494,8 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
         var ds = new LanguageDataSource(config);
         var basePath = config.BasePath;
 
-        app.MapGet(
-            $"{basePath}/languages",
+        endpoints.MapGet(
+            "languages",
             async () =>
             {
                 try
@@ -529,8 +527,8 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
             }
         );
 
-        app.MapPost(
-            $"{basePath}/languages",
+        endpoints.MapPost(
+            "languages",
             async ([FromBody] InsertLanguageRequest body) =>
             {
                 try
@@ -575,8 +573,8 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
             }
         );
 
-        app.MapPut(
-            $"{basePath}/languages/{{id:int}}",
+        endpoints.MapPut(
+            "languages/{id:int}",
             async (int id, [FromBody] UpdateLanguageRequest body) =>
             {
                 try
@@ -627,8 +625,8 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
             }
         );
 
-        app.MapDelete(
-            $"{basePath}/languages/{{id:int}}",
+        endpoints.MapDelete(
+            "languages/{id:int}",
             async (int id) =>
             {
                 try

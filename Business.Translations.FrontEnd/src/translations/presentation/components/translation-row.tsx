@@ -19,7 +19,7 @@ export function TranslationRow({
     setValue(translation.value);
   }, [translation.value]);
 
-  const getLanguageBadgeColor = (code: string) => {
+  function getLanguageBadgeColor(code: string) {
     const colors: Record<string, string> = {
       EN: "bg-blue-100 text-blue-800",
       ES: "bg-red-100 text-red-800",
@@ -28,25 +28,25 @@ export function TranslationRow({
       IT: "bg-green-100 text-green-800",
     };
     return colors[code] || "bg-slate-100 text-slate-800";
-  };
+  }
 
   const isMissing = translation.status === "missing";
 
-  const save = () => {
+  function save() {
     if (value !== translation.value) {
       onEdit?.(translation.id, value);
     }
-  };
+  }
 
-  const handleBlur = () => {
+  function handleBlur() {
     if (cancelRef.current) {
       cancelRef.current = false;
       return;
     }
     save();
-  };
+  }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       e.currentTarget.blur();
@@ -56,7 +56,7 @@ export function TranslationRow({
       setValue(translation.value);
       e.currentTarget.blur();
     }
-  };
+  }
 
   return (
     <tr className="hover:bg-white dark:hover:bg-slate-800/40 transition-colors group bg-white/40 dark:bg-transparent">

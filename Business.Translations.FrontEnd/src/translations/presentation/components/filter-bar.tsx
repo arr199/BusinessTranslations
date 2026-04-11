@@ -1,42 +1,30 @@
 import { useState, useRef, useEffect } from "react";
-
-interface FilterOption {
-  value: string;
-  label: string;
-}
+import { useTranslationStore } from "../stateManagement/translation-store";
 
 interface FilterBarProps {
-  searchValue?: string;
-  onSearchChange?: (value: string) => void;
-  selectedLanguage?: string;
-  onLanguageChange?: (language: string) => void;
-  selectedModule?: string;
-  onModuleChange?: (module: string) => void;
-  languages?: FilterOption[];
-  modules?: FilterOption[];
   onExport?: () => void;
-  onRefresh?: () => void;
 }
 
-export function FilterBar({
-  searchValue = "",
-  onSearchChange,
-  selectedLanguage = "all",
-  onLanguageChange,
-  selectedModule = "all",
-  onModuleChange,
-  languages = [],
-  modules = [],
-  onExport,
-  onRefresh,
-}: FilterBarProps) {
+export function FilterBar({ onExport }: FilterBarProps) {
+  const {
+    searchValue,
+    setSearchValue,
+    selectedLanguage,
+    setSelectedLanguage,
+    selectedModule,
+    setSelectedModule,
+    modules,
+    languages,
+    fetchTranslations,
+  } = useTranslationStore();
+
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
   const [isModuleOpen, setIsModuleOpen] = useState(false);
   const languageRef = useRef<HTMLDivElement>(null);
   const moduleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    function handleClickOutside(event: MouseEvent) {
       if (
         languageRef.current &&
         !languageRef.current.contains(event.target as Node)
@@ -49,21 +37,22 @@ export function FilterBar({
       ) {
         setIsModuleOpen(false);
       }
-    };
+    }
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const getLanguageLabel = () => {
+  function getLanguageLabel() {
     if (selectedLanguage === "all") return "All";
-    return languages.find((l) => l.value === selectedLanguage)?.label || "All";
-  };
+    return languages.find((l) => l.code === selectedLanguage)?.name || "All";
+  }
 
-  const getModuleLabel = () => {
+  function getModuleLabel() {
     if (selectedModule === "all") return "All";
-    return modules.find((m) => m.value === selectedModule)?.label || "All";
-  };
+    return modules.find((m) => m.name === selectedModule)?.name || "All";
+  }
+
   return (
     <section className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 py-3 flex items-center gap-4 flex-wrap shrink-0">
       <div className="relative flex-1 max-w-md">
@@ -75,7 +64,7 @@ export function FilterBar({
           placeholder="Search by key or value..."
           type="text"
           value={searchValue}
-          onChange={(e) => onSearchChange?.(e.target.value)}
+          onChange={(e) => setSearchValue(e.target.value)}
         />
       </div>
 
@@ -98,7 +87,7 @@ export function FilterBar({
             <div className="absolute top-full mt-1 left-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50 min-w-[160px] max-h-64 overflow-y-auto">
               <button
                 onClick={() => {
-                  onLanguageChange?.("all");
+                  setSelectedLanguage("all");
                   setIsLanguageOpen(false);
                 }}
                 className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${
@@ -111,18 +100,18 @@ export function FilterBar({
               </button>
               {languages.map((lang) => (
                 <button
-                  key={lang.value}
+                  key={lang.code}
                   onClick={() => {
-                    onLanguageChange?.(lang.value);
+                    setSelectedLanguage(lang.code);
                     setIsLanguageOpen(false);
                   }}
                   className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${
-                    selectedLanguage === lang.value
+                    selectedLanguage === lang.code
                       ? "bg-primary/10 text-primary font-medium"
                       : "text-slate-700 dark:text-slate-300"
                   }`}
                 >
-                  {lang.label}
+                  {lang.name}
                 </button>
               ))}
             </div>
@@ -147,7 +136,7 @@ export function FilterBar({
             <div className="absolute top-full mt-1 left-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50 min-w-[160px] max-h-64 overflow-y-auto">
               <button
                 onClick={() => {
-                  onModuleChange?.("all");
+                  setSelectedModule("all");
                   setIsModuleOpen(false);
                 }}
                 className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${
@@ -160,18 +149,18 @@ export function FilterBar({
               </button>
               {modules.map((mod) => (
                 <button
-                  key={mod.value}
+                  key={mod.name}
                   onClick={() => {
-                    onModuleChange?.(mod.value);
+                    setSelectedModule(mod.name);
                     setIsModuleOpen(false);
                   }}
                   className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${
-                    selectedModule === mod.value
+                    selectedModule === mod.name
                       ? "bg-primary/10 text-primary font-medium"
                       : "text-slate-700 dark:text-slate-300"
                   }`}
                 >
-                  {mod.label}
+                  {mod.name}
                 </button>
               ))}
             </div>
@@ -189,7 +178,7 @@ export function FilterBar({
         </button>
 
         <button
-          onClick={onRefresh}
+          onClick={() => fetchTranslations()}
           className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors"
         >
           <span className="material-symbols-outlined text-lg">refresh</span>

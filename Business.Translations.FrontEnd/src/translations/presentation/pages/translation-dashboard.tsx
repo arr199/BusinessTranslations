@@ -31,11 +31,11 @@ export function TranslationDashboard() {
   );
 
   useEffect(() => {
-    const onHashChange = () => {
+    function onHashChange() {
       setActiveView(
         window.location.hash === "#settings" ? "settings" : "dashboard",
       );
-    };
+    }
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
@@ -65,7 +65,7 @@ export function TranslationDashboard() {
     name: string;
   }>({ isOpen: false, id: "", name: "" });
 
-  // Initialize data from API or mock
+  // Initialize data from API
   const {
     modules: storeModules,
     languages: storeLanguages,
@@ -82,7 +82,6 @@ export function TranslationDashboard() {
 
   const {
     translations,
-    totalCount,
     fetchTranslations,
     fetchModules,
     fetchLanguages,
@@ -99,14 +98,11 @@ export function TranslationDashboard() {
     updateModule,
     deleteModule,
     deleteLanguage,
-    setSearchValue,
-    setSelectedLanguage,
     setSelectedModule,
-    setCurrentPage,
-    setItemsPerPage,
     clearError,
   } = useTranslationStore();
 
+  // Debounced fetch on filter/pagination change
   const didMountRef = useRef(false);
   const prevRef = useRef({
     searchValue,
@@ -163,32 +159,36 @@ export function TranslationDashboard() {
     fetchTranslations,
   ]);
 
-  const openSettings = () => (window.location.hash = "settings");
-  const backToDashboard = () => {
+  // Navigation
+  function openSettings() {
+    window.location.hash = "settings";
+  }
+
+  function backToDashboard() {
     history.replaceState(null, "", window.location.pathname);
     setActiveView("dashboard");
-  };
+  }
 
-  const handleSelectModule = (module: string) => {
+  function handleSelectModule(module: string) {
     setSelectedModule(module);
     if (activeView === "settings") backToDashboard();
-  };
+  }
 
-  // Modal handlers
-  const handleEdit = async (id: string, value: string) => {
+  // CRUD handlers with toast feedback
+  async function handleEdit(id: string, value: string) {
     try {
       await updateTranslation(id, value);
       toast.success("Translation updated.");
     } catch {
       toast.error("Failed to update translation.");
     }
-  };
+  }
 
-  const handleDelete = (id: string, key: string) => {
+  function handleDelete(id: string, key: string) {
     setDeleteModal({ isOpen: true, id, key });
-  };
+  }
 
-  const confirmDelete = async () => {
+  async function confirmDelete() {
     try {
       await deleteTranslation(deleteModal.id);
       setDeleteModal({ isOpen: false, id: "", key: "" });
@@ -196,9 +196,9 @@ export function TranslationDashboard() {
     } catch {
       toast.error("Failed to delete translation.");
     }
-  };
+  }
 
-  const confirmDeleteModule = async () => {
+  async function confirmDeleteModule() {
     try {
       await deleteModule(deleteModuleModal.id);
       setDeleteModuleModal({ isOpen: false, id: "", name: "" });
@@ -206,9 +206,9 @@ export function TranslationDashboard() {
     } catch {
       toast.error("Failed to delete module.");
     }
-  };
+  }
 
-  const confirmDeleteLanguage = async () => {
+  async function confirmDeleteLanguage() {
     try {
       await deleteLanguage(deleteLanguageModal.id);
       setDeleteLanguageModal({ isOpen: false, id: "", name: "" });
@@ -216,9 +216,9 @@ export function TranslationDashboard() {
     } catch {
       toast.error("Failed to delete language.");
     }
-  };
+  }
 
-  const handleCreateTranslation = async (data: Translation) => {
+  async function handleCreateTranslation(data: Translation) {
     try {
       await createTranslation({
         module: data.module,
@@ -235,9 +235,9 @@ export function TranslationDashboard() {
     } catch {
       toast.error("Failed to create translation.");
     }
-  };
+  }
 
-  const handleCreateLanguage = async (data: { code: string; name: string }) => {
+  async function handleCreateLanguage(data: { code: string; name: string }) {
     try {
       await createLanguage({
         code: data.code,
@@ -248,9 +248,9 @@ export function TranslationDashboard() {
     } catch {
       toast.error("Failed to create language.");
     }
-  };
+  }
 
-  const handleCreateModule = async (data: { name: string; icon: string }) => {
+  async function handleCreateModule(data: { name: string; icon: string }) {
     try {
       await createModule({
         name: data.name,
@@ -262,9 +262,9 @@ export function TranslationDashboard() {
     } catch {
       toast.error("Failed to create module.");
     }
-  };
+  }
 
-  const handleRunMigration = async () => {
+  async function handleRunMigration() {
     try {
       const result = await runMigration("/bt");
 
@@ -279,24 +279,14 @@ export function TranslationDashboard() {
     } catch {
       toast.error("Migration failed. Check console for details.");
     }
-  };
+  }
 
-  // Filter options for dropdowns
-  const moduleFilterOptions = storeModules.map((m) => ({
-    value: m.name,
-    label: m.name,
-  }));
-
-  const languageFilterOptions = storeLanguages.map((l) => ({
-    value: l.code,
-    label: l.name,
-  }));
-
-  // Dropdown options for modals
+  // Derived data for modals and sidebar
   const moduleOptions = storeModules.map((m) => ({
     value: m.id,
     label: m.name,
   }));
+
   const languageOptions = storeLanguages.map((l) => ({
     value: l.id,
     label: l.name,
@@ -306,6 +296,11 @@ export function TranslationDashboard() {
     { id: "all", name: "All Modules", icon: "apps" },
     ...storeModules,
   ];
+
+  const hasActiveFilters =
+    searchValue !== "" ||
+    selectedLanguage !== "all" ||
+    selectedModule !== "all";
 
   return (
     <div className="bg-slate-50 dark:bg-[#0b1219] text-slate-900 dark:text-slate-100 min-h-screen flex overflow-hidden">
@@ -334,18 +329,7 @@ export function TranslationDashboard() {
             onAddKey={() => setIsNewTranslationOpen(true)}
           />
 
-          <FilterBar
-            searchValue={searchValue}
-            onSearchChange={setSearchValue}
-            selectedLanguage={selectedLanguage}
-            onLanguageChange={setSelectedLanguage}
-            selectedModule={selectedModule}
-            onModuleChange={setSelectedModule}
-            languages={languageFilterOptions}
-            modules={moduleFilterOptions}
-            onExport={() => console.log("Export")}
-            onRefresh={() => fetchTranslations()}
-          />
+          <FilterBar onExport={() => console.log("Export")} />
 
           {error && <ErrorBanner message={error} onDismiss={clearError} />}
 
@@ -354,24 +338,14 @@ export function TranslationDashboard() {
           ) : (
             <TranslationTable
               translations={translations}
-              hasActiveFilters={
-                searchValue !== "" ||
-                selectedLanguage !== "all" ||
-                selectedModule !== "all"
-              }
+              hasActiveFilters={hasActiveFilters}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onAddTranslation={() => setIsNewTranslationOpen(true)}
             />
           )}
 
-          <Footer
-            currentPage={currentPage}
-            totalItems={totalCount}
-            itemsPerPage={itemsPerPage}
-            onPageChange={setCurrentPage}
-            onItemsPerPageChange={setItemsPerPage}
-          />
+          <Footer />
         </main>
       ) : (
         <SettingsPage

@@ -1,21 +1,17 @@
-interface FooterProps {
-  currentPage: number;
-  totalItems: number;
-  itemsPerPage: number;
-  onPageChange?: (page: number) => void;
-  onItemsPerPageChange?: (items: number) => void;
-}
+import { useTranslationStore } from "../stateManagement/translation-store";
 
-export function Footer({
-  currentPage,
-  totalItems,
-  itemsPerPage,
-  onPageChange,
-  onItemsPerPageChange,
-}: FooterProps) {
-  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
-  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+export function Footer() {
+  const {
+    currentPage,
+    totalCount,
+    itemsPerPage,
+    setCurrentPage,
+    setItemsPerPage,
+  } = useTranslationStore();
+
+  const startItem = totalCount === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalCount);
+  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
 
   return (
     <footer className="h-12 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-8 text-xs text-slate-500 shrink-0">
@@ -24,7 +20,7 @@ export function Footer({
         <span className="font-bold text-slate-700 dark:text-slate-300">
           {startItem}-{endItem}
         </span>{" "}
-        of {totalItems.toLocaleString()} translations
+        of {totalCount.toLocaleString()} translations
       </div>
 
       <div className="flex items-center gap-4">
@@ -33,7 +29,7 @@ export function Footer({
           <select
             className="bg-transparent border-none focus:ring-0 text-xs font-bold cursor-pointer text-slate-700 dark:text-slate-300"
             value={itemsPerPage}
-            onChange={(e) => onItemsPerPageChange?.(Number(e.target.value))}
+            onChange={(e) => setItemsPerPage(Number(e.target.value))}
           >
             <option value={10}>10</option>
             <option value={25}>25</option>
@@ -45,7 +41,7 @@ export function Footer({
           <button
             className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30"
             disabled={currentPage === 1}
-            onClick={() => onPageChange?.(currentPage - 1)}
+            onClick={() => setCurrentPage(currentPage - 1)}
           >
             <span className="material-symbols-outlined text-base leading-none">
               chevron_left
@@ -57,7 +53,7 @@ export function Footer({
           <button
             className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30"
             disabled={currentPage >= totalPages}
-            onClick={() => onPageChange?.(currentPage + 1)}
+            onClick={() => setCurrentPage(currentPage + 1)}
           >
             <span className="material-symbols-outlined text-base leading-none">
               chevron_right

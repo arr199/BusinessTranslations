@@ -29,6 +29,14 @@ public static class UseBusinessTranslationsExtension
             );
         }
 
+        if (configuration.AuthorizationFilter is not null)
+        {
+            logger.LogInformation(
+                "Business.Translations authorization filter enabled for /{BasePath}/*",
+                configuration.BasePath
+            );
+        }
+
         logger.LogInformation(
             "Business.Translations initialized — Provider={Provider}, BasePath=/{BasePath}",
             configuration.Provider,

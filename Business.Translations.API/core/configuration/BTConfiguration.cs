@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Http;
 
 namespace Business.Translations.Configuration;
 
@@ -39,6 +40,11 @@ public partial class BTConfiguration : IBTConfiguration
     public DatabaseProvider Provider { get; internal set; } = DatabaseProvider.None;
 
     /// <summary>
+    /// Optional authorization filter applied to every BT endpoint.
+    /// </summary>
+    public IEndpointFilter? AuthorizationFilter { get; private set; }
+
+    /// <summary>
     /// Configure the package to use SQL Server as the database provider.
     /// </summary>
     public BTConfiguration UseSqlServer(string connectionString)
@@ -46,6 +52,21 @@ public partial class BTConfiguration : IBTConfiguration
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString, nameof(connectionString));
         ConnectionString = connectionString;
         Provider = DatabaseProvider.SqlServer;
+        return this;
+    }
+
+    /// <summary>
+    /// Protect all Business.Translations endpoints with a custom <see cref="IEndpointFilter"/>.
+    /// <example>
+    /// <code>
+    /// config.UseAuthorizationFilter(new MyAuthorizationFilter());
+    /// </code>
+    /// </example>
+    /// </summary>
+    public BTConfiguration UseAuthorizationFilter(IEndpointFilter filter)
+    {
+        ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+        AuthorizationFilter = filter;
         return this;
     }
 

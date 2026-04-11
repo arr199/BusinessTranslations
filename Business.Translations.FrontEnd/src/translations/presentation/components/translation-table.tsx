@@ -88,17 +88,20 @@ export function TranslationTable({
     };
   }, []);
 
-  const colStyle = (i: number): React.CSSProperties =>
-    colWidths[i] ? { width: colWidths[i] } : {};
+  function colStyle(i: number): React.CSSProperties {
+    return colWidths[i] ? { width: colWidths[i] } : {};
+  }
 
-  const resizeHandle = (colIndex: number) => (
-    <span
-      onMouseDown={(e) => onMouseDown(colIndex, e)}
-      className="absolute -right-2 top-0 h-full w-4 cursor-col-resize flex items-center justify-center z-10"
-    >
-      <span className="h-2/3 w-px rounded-full bg-slate-300 dark:bg-slate-600 pointer-events-none transition-colors group-hover/resize:bg-primary/60" />
-    </span>
-  );
+  function resizeHandle(colIndex: number) {
+    return (
+      <span
+        onMouseDown={(e) => onMouseDown(colIndex, e)}
+        className="absolute -right-2 top-0 h-full w-4 cursor-col-resize flex items-center justify-center z-10"
+      >
+        <span className="h-2/3 w-px rounded-full bg-slate-300 dark:bg-slate-600 pointer-events-none transition-colors group-hover/resize:bg-primary/60" />
+      </span>
+    );
+  }
 
   if (translations.length === 0) {
     return (
