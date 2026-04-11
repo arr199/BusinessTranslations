@@ -18,7 +18,7 @@ import {
 import { useDarkMode } from "../hooks/use-dark-mode";
 import { useTranslationStore } from "../stateManagement/translation-store";
 import { useInitializeData } from "../hooks/use-Initialize-data";
-import { runMigration } from "../../data/migrationService";
+import { runMigration } from "../../data/migration-service";
 import { SettingsPage } from "./settings-page";
 import type { Translation } from "../../domain/types";
 
@@ -42,7 +42,7 @@ export function TranslationDashboard() {
   const [isNewTranslationOpen, setIsNewTranslationOpen] = useState(false);
   const [isNewLanguageOpen, setIsNewLanguageOpen] = useState(false);
   const [isNewModuleOpen, setIsNewModuleOpen] = useState(false);
-  const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(true);
+  const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
   const [deleteModuleModal, setDeleteModuleModal] = useState<{
     isOpen: boolean;
     id: string;
@@ -60,11 +60,21 @@ export function TranslationDashboard() {
     languages: storeLanguages,
     isLoading,
     error,
+    tablesNotReady,
   } = useInitializeData();
+
+  useEffect(() => {
+    if (tablesNotReady) {
+      setIsSchemaModalOpen(true);
+    }
+  }, [tablesNotReady]);
 
   const {
     translations,
+    totalCount,
     fetchTranslations,
+    fetchModules,
+    fetchLanguages,
     searchValue,
     selectedLanguage,
     selectedModule,
@@ -185,7 +195,6 @@ export function TranslationDashboard() {
   const handleCreateTranslation = async (data: Translation) => {
     try {
       await createTranslation({
-        
         module: data.module,
         keyName: data.keyName,
         language: data.language,
@@ -228,16 +237,13 @@ export function TranslationDashboard() {
 
   const handleRunMigration = async () => {
     try {
-      console.log("Starting database migration...");
-      const result = await runMigration();
+      const result = await runMigration("/bt");
 
       if (result.success) {
-        console.log("Migration completed successfully:", result);
-        alert(
-          `Migration successful! Created tables: ${result.tablesCreated?.join(", ") || "all tables"}`,
-        );
+        setIsSchemaModalOpen(false);
+        await Promise.all([fetchModules(), fetchLanguages()]);
+        await fetchTranslations();
       } else {
-        console.error("Migration failed:", result.message);
         alert(`Migration failed: ${result.message}`);
       }
     } catch (error) {
@@ -259,11 +265,11 @@ export function TranslationDashboard() {
 
   // Dropdown options for modals
   const moduleOptions = storeModules.map((m) => ({
-    value: m.name,
+    value: m.id,
     label: m.name,
   }));
   const languageOptions = storeLanguages.map((l) => ({
-    value: l.code,
+    value: l.id,
     label: l.name,
   }));
 
@@ -320,13 +326,17 @@ export function TranslationDashboard() {
             <TranslationTable
               translations={translations}
               onEdit={updateTranslation}
+              onStatusChange={(id, status) => {
+                const t = translations.find((t) => t.id === id);
+                if (t) updateTranslation(id, t.value, status);
+              }}
               onDelete={handleDelete}
             />
           )}
 
           <Footer
             currentPage={currentPage}
-            totalItems={1248}
+            totalItems={totalCount}
             itemsPerPage={itemsPerPage}
             onPageChange={setCurrentPage}
             onItemsPerPageChange={setItemsPerPage}

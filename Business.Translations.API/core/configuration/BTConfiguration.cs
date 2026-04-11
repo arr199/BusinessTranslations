@@ -1,8 +1,8 @@
 using System.Text.RegularExpressions;
 
-namespace businessTranslations.configuration;
+namespace Business.Translations.Configuration;
 
-public class BTConfiguration : IBTConfiguration
+public partial class BTConfiguration : IBTConfiguration
 {
     private string _basePath = "bt";
     private string _connectionString = string.Empty;
@@ -14,13 +14,11 @@ public class BTConfiguration : IBTConfiguration
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(value, nameof(BasePath));
 
-            Regex reg = new("^[a-zA-Z0-9]+$");
-
-            if (!reg.IsMatch(value))
+            if (!AlphanumericRegex().IsMatch(value))
             {
-                throw new ArgumentNullException(
-                    nameof(BasePath),
-                    "must contain only letters and numbers"
+                throw new ArgumentException(
+                    "BasePath must contain only letters and numbers.",
+                    nameof(BasePath)
                 );
             }
 
@@ -31,12 +29,32 @@ public class BTConfiguration : IBTConfiguration
     public string ConnectionString
     {
         get => _connectionString;
-        set
+        internal set
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(value, nameof(ConnectionString));
             _connectionString = value;
         }
     }
 
-    public bool UseSql { get; set; } = true;
+    public DatabaseProvider Provider { get; internal set; } = DatabaseProvider.None;
+
+    /// <summary>
+    /// Configure the package to use SQL Server as the database provider.
+    /// </summary>
+    public BTConfiguration UseSqlServer(string connectionString)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionString, nameof(connectionString));
+        ConnectionString = connectionString;
+        Provider = DatabaseProvider.SqlServer;
+        return this;
+    }
+
+    [GeneratedRegex("^[a-zA-Z0-9]+$")]
+    private static partial Regex AlphanumericRegex();
+}
+
+public enum DatabaseProvider
+{
+    None,
+    SqlServer,
 }

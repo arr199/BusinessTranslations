@@ -8,6 +8,7 @@ import { languagesDataSource } from "../../data/datasource/language-datasource";
 export const useTranslationStore = create<TranslationStore>((set) => ({
   // Initial state
   translations: [],
+  totalCount: 0,
   modules: [],
   languages: [],
   searchValue: "",
@@ -36,14 +37,18 @@ export const useTranslationStore = create<TranslationStore>((set) => ({
           ? state.languages.find((l) => l.code === state.selectedLanguage)?.id
           : undefined;
 
-      const translations = await translationsDataSource.getAll({
+      const result = await translationsDataSource.getAll({
         moduleId,
         languageId,
         keywords: state.searchValue,
         limit: state.itemsPerPage,
         offset: (state.currentPage - 1) * state.itemsPerPage,
       });
-      set({ translations, isLoadingTranslations: false });
+      set({
+        translations: result.items,
+        totalCount: result.totalCount,
+        isLoadingTranslations: false,
+      });
     } catch (error) {
       set({
         error:
@@ -58,10 +63,8 @@ export const useTranslationStore = create<TranslationStore>((set) => ({
   createTranslation: async (translation) => {
     set({ error: null });
     try {
-      const newTranslation = await translationsDataSource.create(translation);
-      set((state) => ({
-        translations: [...state.translations, newTranslation],
-      }));
+      await translationsDataSource.create(translation);
+      await useTranslationStore.getState().fetchTranslations();
     } catch (error) {
       set({
         error:
@@ -73,13 +76,13 @@ export const useTranslationStore = create<TranslationStore>((set) => ({
     }
   },
 
-  updateTranslation: async (id, value) => {
+  updateTranslation: async (id, value, status) => {
     set({ error: null });
     try {
-      const updated = await translationsDataSource.update(id, value);
+      await translationsDataSource.update(id, value, status);
       set((state) => ({
         translations: state.translations.map((t) =>
-          t.id === id ? updated : t,
+          t.id === id ? { ...t, value, ...(status && { status }) } : t,
         ),
       }));
     } catch (error) {
@@ -129,10 +132,8 @@ export const useTranslationStore = create<TranslationStore>((set) => ({
   createModule: async (module) => {
     set({ error: null });
     try {
-      const newModule = await modulesDataSource.create(module);
-      set((state) => ({
-        modules: [...state.modules, newModule],
-      }));
+      await modulesDataSource.create(module);
+      await useTranslationStore.getState().fetchModules();
     } catch (error) {
       set({
         error:
@@ -145,30 +146,9 @@ export const useTranslationStore = create<TranslationStore>((set) => ({
   updateModule: async (id, module) => {
     set({ error: null });
     try {
-      const existing = useTranslationStore
-        .getState()
-        .modules.find((m) => m.id === id);
-
-      const updated = await modulesDataSource.update(id, module);
-
-      set((state) => {
-        const oldName = existing?.name;
-        const newName = updated.name;
-
-        return {
-          modules: state.modules.map((m) => (m.id === id ? updated : m)),
-          translations:
-            oldName && newName && oldName !== newName
-              ? state.translations.map((t) =>
-                  t.module === oldName ? { ...t, module: newName } : t,
-                )
-              : state.translations,
-          selectedModule:
-            oldName && newName && state.selectedModule === oldName
-              ? newName
-              : state.selectedModule,
-        };
-      });
+      await modulesDataSource.update(id, module);
+      await useTranslationStore.getState().fetchModules();
+      await useTranslationStore.getState().fetchTranslations();
     } catch (error) {
       set({
         error:
@@ -229,10 +209,8 @@ export const useTranslationStore = create<TranslationStore>((set) => ({
   createLanguage: async (language) => {
     set({ error: null });
     try {
-      const newLanguage = await languagesDataSource.create(language);
-      set((state) => ({
-        languages: [...state.languages, newLanguage],
-      }));
+      await languagesDataSource.create(language);
+      await useTranslationStore.getState().fetchLanguages();
     } catch (error) {
       set({
         error:
@@ -278,6 +256,7 @@ export const useTranslationStore = create<TranslationStore>((set) => ({
 interface TranslationStore {
   // State
   translations: Translation[];
+  totalCount: number;
   modules: Module[];
   languages: UiLanguage[];
   searchValue: string;
@@ -297,7 +276,11 @@ interface TranslationStore {
   // Translation actions
   fetchTranslations: () => Promise<void>;
   createTranslation: (translation: Omit<Translation, "id">) => Promise<void>;
-  updateTranslation: (id: string, value: string) => Promise<void>;
+  updateTranslation: (
+    id: string,
+    value: string,
+    status?: Translation["status"],
+  ) => Promise<void>;
   deleteTranslation: (id: string) => Promise<void>;
 
   // Module actions

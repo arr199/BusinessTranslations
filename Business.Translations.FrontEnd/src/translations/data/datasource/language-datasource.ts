@@ -2,8 +2,7 @@ import { ApiError } from "../../../../core/errors/Errors";
 import type { BtGetLanguagesResponse, UiLanguage } from "../../domain/types";
 import { fetchApi } from "./fetch-api-helper";
 
-
-
+type ApiResult = { success: boolean; message: string };
 
 export const languagesDataSource = {
   getAll: async () => {
@@ -23,22 +22,20 @@ export const languagesDataSource = {
     );
   },
 
-  getById: (id: string) => fetchApi<UiLanguage>(`/languages/${id}`),
-
   create: (language: { code: string; name: string }) =>
-    fetchApi<UiLanguage>("/languages", {
+    fetchApi<ApiResult>("/bt/languages", {
       method: "POST",
       body: JSON.stringify(language),
     }),
 
   update: (id: string, language: Partial<UiLanguage>) =>
-    fetchApi<UiLanguage>(`/languages/${id}`, {
-      method: "PATCH",
+    fetchApi<ApiResult>(`/bt/languages/${id}`, {
+      method: "PUT",
       body: JSON.stringify(language),
     }),
 
   delete: (id: string) =>
-    fetchApi<void>(`/languages/${id}`, {
+    fetchApi<ApiResult>(`/bt/languages/${id}`, {
       method: "DELETE",
     }),
 };

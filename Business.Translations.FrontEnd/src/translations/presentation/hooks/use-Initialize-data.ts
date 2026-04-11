@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslationStore } from "../stateManagement/translation-store";
 
 export function useInitializeData() {
@@ -15,10 +15,15 @@ export function useInitializeData() {
     error,
   } = useTranslationStore();
 
+  const [tablesNotReady, setTablesNotReady] = useState(false);
+
   useEffect(() => {
     const initializeData = async () => {
       await Promise.all([fetchModules(), fetchLanguages()]);
       await fetchTranslations();
+
+      const { error: initError } = useTranslationStore.getState();
+      setTablesNotReady(!!initError);
     };
 
     initializeData();
@@ -30,5 +35,6 @@ export function useInitializeData() {
     languages,
     isLoading: isLoadingTranslations || isLoadingModules || isLoadingLanguages,
     error,
+    tablesNotReady,
   };
 }

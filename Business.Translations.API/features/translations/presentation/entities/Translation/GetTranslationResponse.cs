@@ -1,4 +1,8 @@
-public class GetTranslationResponse() : ApiResponse
+using Business.Translations.API.features.translations.data.models;
+
+namespace Business.Translations.DTOs;
+
+public class GetTranslationResponse : ApiResponse<List<TranslationModel>>
 {
-    public required List<TranslationModel> Data { get; set; }
+    public int TotalCount { get; set; }
 }

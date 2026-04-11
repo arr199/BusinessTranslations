@@ -2,6 +2,8 @@ import { ApiError } from "../../../../core/errors/Errors";
 import type { BtGetModulesResponse, Module } from "../../domain/types";
 import { fetchApi } from "./fetch-api-helper";
 
+type ApiResult = { success: boolean; message: string };
+
 export const modulesDataSource = {
   getAll: async () => {
     const response = await fetchApi<BtGetModulesResponse>("/bt/modules");
@@ -20,22 +22,20 @@ export const modulesDataSource = {
     );
   },
 
-  getById: (id: string) => fetchApi<Module>(`/modules/${id}`),
-
   create: (module: Omit<Module, "id">) =>
-    fetchApi<Module>("/modules", {
+    fetchApi<ApiResult>("/bt/modules", {
       method: "POST",
-      body: JSON.stringify(module),
+      body: JSON.stringify({ name: module.name, icon: module.icon }),
     }),
 
   update: (id: string, module: Partial<Module>) =>
-    fetchApi<Module>(`/modules/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify(module),
+    fetchApi<ApiResult>(`/bt/modules/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ name: module.name, icon: module.icon }),
     }),
 
   delete: (id: string) =>
-    fetchApi<void>(`/modules/${id}`, {
+    fetchApi<ApiResult>(`/bt/modules/${id}`, {
       method: "DELETE",
     }),
 };

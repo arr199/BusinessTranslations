@@ -1,3 +1,5 @@
+namespace Business.Translations.DTOs;
+
 public class InsertTranslationRequest
 {
     public required int ModuleId { get; set; }

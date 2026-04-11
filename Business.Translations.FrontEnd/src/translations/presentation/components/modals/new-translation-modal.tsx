@@ -61,7 +61,14 @@ export function NewTranslationModal({
           <Dropdown
             options={modules}
             value={formData.moduleId}
-            onChange={(value) => setFormData({ ...formData, module: value })}
+            onChange={(value) => {
+              const selected = modules.find((m) => m.value === value);
+              setFormData({
+                ...formData,
+                moduleId: value,
+                module: selected?.label || value,
+              });
+            }}
             placeholder="Select module"
           />
         </div>
@@ -92,7 +99,7 @@ export function NewTranslationModal({
               const selectedLang = languages.find((l) => l.value === value);
               setFormData({
                 ...formData,
-                languageCode: value,
+                languageId: value,
                 language: selectedLang?.label || value,
               });
             }}

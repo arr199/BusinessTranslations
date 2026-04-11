@@ -1,16 +1,29 @@
+using Business.Translations.DTOs;
+using Business.Translations.Validators;
 using FluentValidation;
 
-public class TranslationValidationService
-{
-    public async Task ValidateAsync(InsertTranslationRequest data)
-    {
-        var validator = new InsertTranslationRequestValidator();
-        await validator.ValidateAndThrowAsync(data);
-    }
+namespace Business.Translations.Services;
 
-    public async Task ValidateAsync(GetTranslationRequest data)
-    {
-        var validator = new GetTranslationRequestValidator();
-        await validator.ValidateAndThrowAsync(data);
-    }
+public static class ValidationService
+{
+    public static async Task ValidateAsync(InsertTranslationRequest data) =>
+        await new InsertTranslationRequestValidator().ValidateAndThrowAsync(data);
+
+    public static async Task ValidateAsync(GetTranslationRequest data) =>
+        await new GetTranslationRequestValidator().ValidateAndThrowAsync(data);
+
+    public static async Task ValidateAsync(UpdateTranslationRequest data) =>
+        await new UpdateTranslationRequestValidator().ValidateAndThrowAsync(data);
+
+    public static async Task ValidateAsync(InsertModuleRequest data) =>
+        await new InsertModuleRequestValidator().ValidateAndThrowAsync(data);
+
+    public static async Task ValidateAsync(UpdateModuleRequest data) =>
+        await new UpdateModuleRequestValidator().ValidateAndThrowAsync(data);
+
+    public static async Task ValidateAsync(InsertLanguageRequest data) =>
+        await new InsertLanguageRequestValidator().ValidateAndThrowAsync(data);
+
+    public static async Task ValidateAsync(UpdateLanguageRequest data) =>
+        await new UpdateLanguageRequestValidator().ValidateAndThrowAsync(data);
 }

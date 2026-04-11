@@ -1,5 +1,3 @@
-public class InsertTranslationResponse() : ApiResponse
-{
-    public required List<dynamic> Data { get; set; }
-}
+namespace Business.Translations.DTOs;
 
+public class InsertTranslationResponse : ApiResponse { }

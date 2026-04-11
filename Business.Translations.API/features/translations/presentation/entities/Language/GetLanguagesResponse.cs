@@ -1,4 +1,5 @@
-public class GetLanguagesResponse() : ApiResponse
-{
-    public required List<LanguageModel> Data { get; set; }
-}
+using Business.Translations.API.features.translations.data.models;
+
+namespace Business.Translations.DTOs;
+
+public class GetLanguagesResponse : ApiResponse<List<LanguageModel>> { }

@@ -57,7 +57,7 @@ export type BtTranslationModel = {
   keyName: string;
   value: string | null;
   status: string;
-  createAt?: string;
+  createdAt?: string;
   updatedAt?: string;
 
   module: BtModuleModel;
@@ -69,6 +69,7 @@ export type BtGetTranslationsResponse = {
   message: string;
   error: string | null;
   data: BtTranslationModel[];
+  totalCount: number;
 };
 
 export type BtGetModulesResponse = {

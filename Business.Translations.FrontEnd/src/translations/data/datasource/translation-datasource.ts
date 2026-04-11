@@ -34,8 +34,8 @@ export const translationsDataSource = {
       params.set("languageId", String(languageIdNum));
 
     const url = params.toString()
-      ? `/bt/translation?${params.toString()}`
-      : "/bt/translation";
+      ? `/bt/translations?${params.toString()}`
+      : "/bt/translations";
 
     const response = await fetchApi<BtGetTranslationsResponse>(url);
 
@@ -43,25 +43,31 @@ export const translationsDataSource = {
       throw new ApiError(500, response.error || response.message);
     }
 
-    return (response.data || []).map(mapBtTranslationToUi);
+    return {
+      items: (response.data || []).map(mapBtTranslationToUi),
+      totalCount: response.totalCount ?? 0,
+    };
   },
 
-  // getById: (id: string) => fetchApi<Translation>(`/bt/translations/${id}`),
-
   create: (translation: Omit<Translation, "id">) =>
-    fetchApi<Translation>("/bt/translation", {
+    fetchApi<Translation>("/bt/translations", {
       method: "POST",
-      body: JSON.stringify(translation),
+      body: JSON.stringify({
+        moduleId: Number(translation.moduleId),
+        languageId: Number(translation.languageId),
+        keyName: translation.keyName,
+        value: translation.value,
+      }),
     }),
 
-  update: (id: string, value: string) =>
-    fetchApi<Translation>(`/translations/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ value }),
+  update: (id: string, value: string, status?: string) =>
+    fetchApi<{ success: boolean }>(`/bt/translations/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ value, ...(status && { status }) }),
     }),
 
   delete: (id: string) =>
-    fetchApi<void>(`/translations/${id}`, {
+    fetchApi<{ success: boolean }>(`/bt/translations/${id}`, {
       method: "DELETE",
     }),
 };

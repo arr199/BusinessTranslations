@@ -13,9 +13,9 @@ export function Footer({
   onPageChange,
   onItemsPerPageChange,
 }: FooterProps) {
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
 
   return (
     <footer className="h-12 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-8 text-xs text-slate-500 shrink-0">
@@ -35,9 +35,9 @@ export function Footer({
             value={itemsPerPage}
             onChange={(e) => onItemsPerPageChange?.(Number(e.target.value))}
           >
+            <option value={10}>10</option>
+            <option value={25}>25</option>
             <option value={50}>50</option>
-            <option value={100}>100</option>
-            <option value={250}>250</option>
           </select>
         </div>
 

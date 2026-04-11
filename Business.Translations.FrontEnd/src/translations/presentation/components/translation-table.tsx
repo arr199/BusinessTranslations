@@ -4,12 +4,14 @@ import type { Translation } from "../../domain/types";
 interface TranslationTableProps {
   translations: Translation[];
   onEdit?: (id: string, value: string) => void;
+  onStatusChange?: (id: string, status: Translation["status"]) => void;
   onDelete?: (id: string, key: string) => void;
 }
 
 export function TranslationTable({
   translations,
   onEdit,
+  onStatusChange,
   onDelete,
 }: TranslationTableProps) {
   return (
@@ -43,6 +45,7 @@ export function TranslationTable({
               key={translation.id}
               translation={translation}
               onEdit={onEdit}
+              onStatusChange={onStatusChange}
               onDelete={onDelete}
             />
           ))}

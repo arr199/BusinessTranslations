@@ -28,14 +28,11 @@ export async function runMigration(
   apiBaseUrl: string = "/api",
 ): Promise<MigrationResponse> {
   try {
-    const response = await fetch(`${apiBaseUrl}/migration/run`, {
+    const response = await fetch(`${apiBaseUrl}/createTables`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        sql: COMPLETE_SQL_SCRIPT,
-      }),
     });
 
     if (!response.ok) {

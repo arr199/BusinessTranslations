@@ -1,19 +1,100 @@
 @API_URL = http://localhost:5100
 
-GET {{API_URL}}/bt/Translation?LanguageId=222&Keywords=23123123123123
+### Create tables
+POST {{API_URL}}/bt/createTables
 Accept: application/json
 
-###
-POST {{API_URL}}/bt/Translation
+### Get translations
+GET {{API_URL}}/bt/translations?Limit=10
+Accept: application/json
+
+### Get translations with filters
+GET {{API_URL}}/bt/translations?LanguageId=1&Keywords=login
+Accept: application/json
+
+### Create translation
+POST {{API_URL}}/bt/translations
 Accept: application/json
 Content-Type: application/json
 
 {
-     "moduleId" : "2",
-     "languageId" : "2",
-     "keyName" : "EXAMPLE",
-     "value" : "EXAMPLE"
+    "moduleId": 1,
+    "languageId": 1,
+    "keyName": "example.key",
+    "value": "Example Value"
 }
+
+### Update translation
+PUT {{API_URL}}/bt/translations/1
+Accept: application/json
+Content-Type: application/json
+
+{
+    "value": "Updated Value",
+    "status": "approved"
+}
+
+### Delete translation
+DELETE {{API_URL}}/bt/translations/1
+Accept: application/json
+
+### Get modules
+GET {{API_URL}}/bt/modules
+Accept: application/json
+
+### Create module
+POST {{API_URL}}/bt/modules
+Accept: application/json
+Content-Type: application/json
+
+{
+    "name": "Settings",
+    "icon": "settings",
+    "description": "Application settings strings"
+}
+
+### Update module
+PUT {{API_URL}}/bt/modules/1
+Accept: application/json
+Content-Type: application/json
+
+{
+    "name": "Common Updated",
+    "icon": "globe"
+}
+
+### Delete module
+DELETE {{API_URL}}/bt/modules/1
+Accept: application/json
+
+### Get languages
+GET {{API_URL}}/bt/languages
+Accept: application/json
+
+### Create language
+POST {{API_URL}}/bt/languages
+Accept: application/json
+Content-Type: application/json
+
+{
+    "code": "de",
+    "name": "German"
+}
+
+### Update language
+PUT {{API_URL}}/bt/languages/1
+Accept: application/json
+Content-Type: application/json
+
+{
+    "code": "en",
+    "name": "English",
+    "isActive": true
+}
+
+### Delete language
+DELETE {{API_URL}}/bt/languages/1
+Accept: application/json
 
 
 

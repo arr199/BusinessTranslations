@@ -1,7 +1,7 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 
-namespace Business.Translations.API.data;
+namespace Business.Translations.API.Data;
 
 public static class DatabaseSeeder
 {

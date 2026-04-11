@@ -36,8 +36,7 @@ body.dark {
 }
 
 .editable-cell:focus-within {
-  border-color: #137fec;
-  background-color: rgba(19, 127, 236, 0.05);
+  border-color: transparent;
 }
 
 /* Primary color utility */

@@ -1,11 +1,13 @@
-using System.Diagnostics;
-using System.Text;
-using businessTranslations.configuration;
+using System.Data;
+using System.Text.RegularExpressions;
+using Business.Translations.API.features.translations.data.models;
+using Business.Translations.Configuration;
+using Business.Translations.DTOs;
 using Microsoft.Data.SqlClient;
 
-namespace Business.Translations.API.features.translations.data.datasource;
+namespace Business.Translations.DataSources;
 
-public class ModuleDataSource
+public partial class ModuleDataSource
 {
     private readonly BTConfiguration _config;
 
@@ -15,51 +17,106 @@ public class ModuleDataSource
         _config = config;
     }
 
-    public async Task<List<ModuleModel>> GetModules()
+    public async Task<List<ModuleModel>> GetModulesAsync()
     {
         using var connection = new SqlConnection(_config.ConnectionString);
         await connection.OpenAsync();
 
-        var sql = new StringBuilder(
-            @"
-            SELECT
-                Id,
-                Name,
-                Slug,
-                Icon,
-                Description,
-                CreatedAt,
-                UpdatedAt
-            FROM BTModules
-            ORDER BY Name
-            "
-        );
+        const string sql =
+            @"SELECT Id, Name, Slug, Icon, Description, CreatedAt, UpdatedAt
+              FROM BTModules ORDER BY Name";
 
-        using var cmd = new SqlCommand(sql.ToString(), connection);
+        using var cmd = new SqlCommand(sql, connection);
         await using var reader = await cmd.ExecuteReaderAsync();
 
         List<ModuleModel> results = [];
 
         while (await reader.ReadAsync())
         {
-            results.Add(
-                new ModuleModel
-                {
-                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                    Name = reader.GetString(reader.GetOrdinal("Name")),
-                    Slug = reader.GetString(reader.GetOrdinal("Slug")),
-                    Icon = reader.IsDBNull(reader.GetOrdinal("Icon"))
-                        ? null
-                        : reader.GetString(reader.GetOrdinal("Icon")),
-                    Description = reader.IsDBNull(reader.GetOrdinal("Description"))
-                        ? null
-                        : reader.GetString(reader.GetOrdinal("Description")),
-                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                    UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
-                }
-            );
+            var model = ModuleModel.FromSqlDataReader(reader);
+            results.Add(model);
         }
 
         return results;
     }
+
+    public async Task InsertModuleAsync(InsertModuleRequest dto)
+    {
+        using var connection = new SqlConnection(_config.ConnectionString);
+        await connection.OpenAsync();
+
+        const string sql =
+            @"INSERT INTO BTModules (Name, Slug, Icon, Description)
+              VALUES (@Name, @Slug, @Icon, @Description);";
+
+        using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.AddWithValue("Name", dto.Name);
+        cmd.Parameters.AddWithValue("Slug", GenerateSlug(dto.Name));
+        cmd.Parameters.AddWithValue("Icon", (object?)dto.Icon ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("Description", (object?)dto.Description ?? DBNull.Value);
+
+        var rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+        if (rowsAffected <= 0)
+        {
+            throw new DataException("Error inserting new module.");
+        }
+    }
+
+    public async Task UpdateModuleAsync(int id, UpdateModuleRequest dto)
+    {
+        using var connection = new SqlConnection(_config.ConnectionString);
+        await connection.OpenAsync();
+
+        const string sql =
+            @"UPDATE BTModules
+              SET Name = @Name, Slug = @Slug, Icon = @Icon, Description = @Description, UpdatedAt = GETUTCDATE()
+              WHERE Id = @Id;";
+
+        using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.AddWithValue("Id", id);
+        cmd.Parameters.AddWithValue("Name", dto.Name);
+        cmd.Parameters.AddWithValue("Slug", GenerateSlug(dto.Name));
+        cmd.Parameters.AddWithValue("Icon", (object?)dto.Icon ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("Description", (object?)dto.Description ?? DBNull.Value);
+
+        var rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+        if (rowsAffected <= 0)
+        {
+            throw new DataException($"Module with Id {id} not found.");
+        }
+    }
+
+    public async Task DeleteModuleAsync(int id)
+    {
+        using var connection = new SqlConnection(_config.ConnectionString);
+        await connection.OpenAsync();
+
+        const string sql = "DELETE FROM BTModules WHERE Id = @Id;";
+
+        using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.AddWithValue("Id", id);
+
+        var rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+        if (rowsAffected <= 0)
+        {
+            throw new DataException($"Module with Id {id} not found.");
+        }
+    }
+
+    private static string GenerateSlug(string name)
+    {
+        var slug = name.ToLowerInvariant().Trim();
+        slug = SlugWhitespaceRegex().Replace(slug, "-");
+        slug = SlugInvalidCharsRegex().Replace(slug, "");
+        return slug;
+    }
+
+    [GeneratedRegex(@"\s+")]
+    private static partial Regex SlugWhitespaceRegex();
+
+    [GeneratedRegex(@"[^a-z0-9\-]")]
+    private static partial Regex SlugInvalidCharsRegex();
 }
