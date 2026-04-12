@@ -22,6 +22,10 @@ import { runMigration } from "../../data/migration-service";
 import { SettingsPage } from "./settings-page";
 import { ToastContainer, toast } from "../components/toast";
 import type { Translation } from "../../domain/types";
+import {
+  exportTranslationsCsv,
+  parseCsvFile,
+} from "../../data/datasource/csv-service";
 
 export function TranslationDashboard() {
   const [isDarkMode, toggleDarkMode] = useDarkMode();
@@ -92,6 +96,7 @@ export function TranslationDashboard() {
     itemsPerPage,
     updateTranslation,
     deleteTranslation,
+    bulkDeleteTranslations,
     createTranslation,
     createModule,
     createLanguage,
@@ -158,6 +163,88 @@ export function TranslationDashboard() {
     itemsPerPage,
     fetchTranslations,
   ]);
+
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  function handleSelectRow(id: string, selected: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (selected) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  function handleSelectAll(selected: boolean) {
+    if (selected) {
+      setSelectedIds(new Set(translations.map((t) => t.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  }
+
+  async function handleBulkDelete() {
+    setBulkDeleteModal(true);
+  }
+
+  const [bulkDeleteModal, setBulkDeleteModal] = useState(false);
+
+  async function confirmBulkDelete() {
+    const ids = [...selectedIds];
+    setBulkDeleteModal(false);
+    try {
+      await bulkDeleteTranslations(ids);
+      setSelectedIds(new Set());
+      toast.success(`${ids.length} translation(s) deleted.`);
+    } catch {
+      toast.error("Failed to delete translations.");
+    }
+  }
+
+  // CSV Export / Import
+  function handleExport() {
+    if (translations.length === 0) {
+      toast.error("No translations to export.");
+      return;
+    }
+    exportTranslationsCsv(translations);
+    toast.success("CSV exported.");
+  }
+
+  async function handleImport(file: File) {
+    try {
+      const rows = await parseCsvFile(file);
+      let created = 0;
+
+      for (const row of rows) {
+        const mod = storeModules.find(
+          (m) => m.name.toLowerCase() === row.module.toLowerCase(),
+        );
+        const lang = storeLanguages.find(
+          (l) => l.code.toLowerCase() === row.languageCode.toLowerCase(),
+        );
+
+        if (!mod || !lang) continue;
+
+        await createTranslation({
+          moduleId: mod.id,
+          languageId: lang.id,
+          module: mod.name,
+          language: lang.name,
+          languageCode: lang.code,
+          keyName: row.keyName,
+          value: row.value,
+          status: "pending",
+        });
+        created++;
+      }
+
+      toast.success(`Imported ${created} translation(s).`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Import failed.");
+    }
+  }
 
   // Navigation
   function openSettings() {
@@ -329,7 +416,7 @@ export function TranslationDashboard() {
             onAddKey={() => setIsNewTranslationOpen(true)}
           />
 
-          <FilterBar onExport={() => console.log("Export")} />
+          <FilterBar onExport={handleExport} onImport={handleImport} />
 
           {error && <ErrorBanner message={error} onDismiss={clearError} />}
 
@@ -339,6 +426,10 @@ export function TranslationDashboard() {
             <TranslationTable
               translations={translations}
               hasActiveFilters={hasActiveFilters}
+              selectedIds={selectedIds}
+              onSelectRow={handleSelectRow}
+              onSelectAll={handleSelectAll}
+              onBulkDelete={handleBulkDelete}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onAddTranslation={() => setIsNewTranslationOpen(true)}
@@ -434,6 +525,15 @@ export function TranslationDashboard() {
         title="Delete Module"
         prompt="This will permanently delete the module and may remove related translations."
         requiredText={deleteModuleModal.name}
+      />
+
+      <DeleteConfirmModal
+        isOpen={bulkDeleteModal}
+        onClose={() => setBulkDeleteModal(false)}
+        onConfirm={confirmBulkDelete}
+        itemName={`${selectedIds.size} translation(s)`}
+        title="Delete Selected Translations"
+        prompt={`Are you sure you want to delete ${selectedIds.size} selected translation(s)?`}
       />
 
       <ToastContainer />

@@ -317,6 +317,49 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                 }
             }
         );
+
+        endpoints.MapDelete(
+            "translations",
+            async ([FromBody] DeleteTranslationsRequest body) =>
+            {
+                try
+                {
+                    if (body.Ids.Length == 0)
+                    {
+                        return Results.BadRequest(
+                            new ApiResponse
+                            {
+                                Success = false,
+                                Message = "No translation IDs provided.",
+                            }
+                        );
+                    }
+
+                    var deleted = await ds.DeleteTranslationsAsync(body.Ids);
+                    logger.LogInformation("Bulk deleted {Count} translations", deleted);
+                    return Results.Ok(
+                        new ApiResponse
+                        {
+                            Success = true,
+                            Message = $"{deleted} translation(s) deleted successfully.",
+                        }
+                    );
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error bulk deleting translations");
+                    return Results.Json(
+                        new ApiResponse
+                        {
+                            Success = false,
+                            Message = "Error deleting translations.",
+                            Error = ex.Message,
+                        },
+                        statusCode: 500
+                    );
+                }
+            }
+        );
     }
 
     // ─── Modules ────────────────────────────────────────────────────

@@ -145,7 +145,7 @@ npm run dev
 
 ### Docker
 
-Spin up a local SQL Server database:
+Spin up a local SQLServer/mongodb database:
 
 ```bash
 docker compose up
@@ -159,36 +159,3 @@ To stop and clean up:
 docker compose down        # keep data
 docker compose down -v     # remove data volume too
 ```
-
-## TODO
-
-- [x] Add configurable authorization filter to protect API endpoints and dashboard
-- [x] Dockerfile/docker-compose for running the API and a database in containers
-
-### Architecture
-
-#### Backend
-
-#### Frontend
-
-### Infrastructure
-
-- [ ] Add unit tests
-- [ ] Add more DB providers (SQLite, PostgreSQL)
-- [ ] Add entity framework to abstract away database access and make it easier to support multiple providers in the future
-- [ ] CI/CD pipeline for running tests and publishing to NuGet
-- [ ] API version
-
-### Features
-
-- [ ] Copy key to clipboard — click-to-copy on the key column
-- [ ] Diff view for edits — show original vs new value before saving
-- [ ] Export/import translations (JSON, CSV)
-- [ ] Bulk actions — checkboxes to delete/change status of multiple rows at once
-- [ ] Filter by status in the filter bar (show only missing, pending, verified)
-
-### UI/UX
-
-### Security
-
-- [ ] Prompt the model to review the frontend and backend and ensure they follow best practices for security (e.g. input validation, authentication, authorization, error handling). And look for any potential vulnerabilities or attack vectors (e.g. SQL injection, XSS, CSRF) and suggest improvements to mitigate them.

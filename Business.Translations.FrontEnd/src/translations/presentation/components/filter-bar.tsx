@@ -3,9 +3,10 @@ import { useTranslationStore } from "../stateManagement/translation-store";
 
 interface FilterBarProps {
   onExport?: () => void;
+  onImport?: (file: File) => void;
 }
 
-export function FilterBar({ onExport }: FilterBarProps) {
+export function FilterBar({ onExport, onImport }: FilterBarProps) {
   const {
     searchValue,
     setSearchValue,
@@ -169,9 +170,24 @@ export function FilterBar({ onExport }: FilterBarProps) {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
+        <label className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors cursor-pointer">
+          <span className="material-symbols-outlined text-lg">upload</span>
+          Import
+          <input
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onImport?.(file);
+              e.target.value = "";
+            }}
+          />
+        </label>
+
         <button
           onClick={onExport}
-          className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+          className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors cursor-pointer"
         >
           <span className="material-symbols-outlined text-lg">download</span>
           Export

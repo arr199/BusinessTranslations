@@ -114,6 +114,24 @@ export const useTranslationStore = create<TranslationStore>((set) => ({
     }
   },
 
+  bulkDeleteTranslations: async (ids) => {
+    set({ error: null });
+    try {
+      await translationsDataSource.bulkDelete(ids);
+      set((state) => ({
+        translations: state.translations.filter((t) => !ids.includes(t.id)),
+      }));
+    } catch (error) {
+      set({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete translations",
+      });
+      throw error;
+    }
+  },
+
   // Modules
   fetchModules: async () => {
     set({ isLoadingModules: true, error: null });
@@ -277,6 +295,7 @@ interface TranslationStore {
     status?: Translation["status"],
   ) => Promise<void>;
   deleteTranslation: (id: string) => Promise<void>;
+  bulkDeleteTranslations: (ids: string[]) => Promise<void>;
 
   // Module actions
   fetchModules: () => Promise<void>;

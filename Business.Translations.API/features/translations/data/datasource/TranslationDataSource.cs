@@ -236,4 +236,25 @@ public class TranslationDataSource
             throw new DataException($"Translation with Id {id} not found.");
         }
     }
+
+    public async Task<int> DeleteTranslationsAsync(int[] ids)
+    {
+        if (ids.Length == 0)
+            return 0;
+
+        using var connection = new SqlConnection(_config.ConnectionString);
+        await connection.OpenAsync();
+
+        var parameters = ids.Select((id, i) => $"@Id{i}").ToArray();
+
+        var sql = $"DELETE FROM BTTranslations WHERE Id IN ({string.Join(",", parameters)});";
+
+        using var cmd = new SqlCommand(sql, connection);
+        for (var i = 0; i < ids.Length; i++)
+        {
+            cmd.Parameters.AddWithValue($"Id{i}", ids[i]);
+        }
+
+        return await cmd.ExecuteNonQueryAsync();
+    }
 }

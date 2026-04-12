@@ -5,6 +5,10 @@ import type { Translation } from "../../domain/types";
 interface TranslationTableProps {
   translations: Translation[];
   hasActiveFilters?: boolean;
+  selectedIds?: Set<string>;
+  onSelectRow?: (id: string, selected: boolean) => void;
+  onSelectAll?: (selected: boolean) => void;
+  onBulkDelete?: () => void;
   onEdit?: (id: string, value: string) => void;
   onDelete?: (id: string, key: string) => void;
   onAddTranslation?: () => void;
@@ -31,6 +35,10 @@ function loadWidths(): number[] {
 export function TranslationTable({
   translations,
   hasActiveFilters = false,
+  selectedIds = new Set(),
+  onSelectRow,
+  onSelectAll,
+  onBulkDelete,
   onEdit,
   onDelete,
   onAddTranslation,
@@ -132,11 +140,43 @@ export function TranslationTable({
     );
   }
 
+  const allSelected =
+    translations.length > 0 && selectedIds.size === translations.length;
+
   return (
     <section className="flex-1 overflow-auto bg-slate-50 dark:bg-[#0b1219]">
+      {selectedIds.size > 0 && (
+        <div className="sticky top-0 z-20 flex items-center gap-3 px-6 py-2 bg-primary/10 border-b border-primary/20">
+          <span className="text-sm font-medium text-primary">
+            {selectedIds.size} selected
+          </span>
+          <button
+            onClick={onBulkDelete}
+            className="flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors"
+          >
+            <span className="material-symbols-outlined text-sm">delete</span>
+            Delete
+          </button>
+          <button
+            onClick={() => onSelectAll?.(false)}
+            className="ml-auto text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+          >
+            Clear selection
+          </button>
+        </div>
+      )}
+
       <table className="w-full text-left border-collapse table-fixed">
         <thead className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-10 shadow-sm">
           <tr>
+            <th className="pl-3 pr-0 py-3 w-10">
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={(e) => onSelectAll?.(e.target.checked)}
+                className="size-4 rounded border-slate-300 dark:border-slate-600 text-primary focus:ring-primary/20 cursor-pointer"
+              />
+            </th>
             <th
               style={colStyle(0)}
               className="relative px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500"
@@ -174,6 +214,8 @@ export function TranslationTable({
             <TranslationRow
               key={translation.id}
               translation={translation}
+              isSelected={selectedIds.has(translation.id)}
+              onSelect={onSelectRow}
               onEdit={onEdit}
               onDelete={onDelete}
             />

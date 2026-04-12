@@ -70,6 +70,12 @@ export const translationsDataSource = {
     fetchApi<{ success: boolean }>(`/bt/translations/${id}`, {
       method: "DELETE",
     }),
+
+  bulkDelete: (ids: string[]) =>
+    fetchApi<{ success: boolean }>("/bt/translations", {
+      method: "DELETE",
+      body: JSON.stringify({ ids: ids.map(Number) }),
+    }),
 };
 
 function normalizeStatus(status: string): Translation["status"] {

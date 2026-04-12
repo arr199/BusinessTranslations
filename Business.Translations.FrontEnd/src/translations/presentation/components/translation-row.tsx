@@ -3,16 +3,21 @@ import type { Translation } from "../../domain/types";
 
 interface TranslationRowProps {
   translation: Translation;
+  isSelected?: boolean;
+  onSelect?: (id: string, selected: boolean) => void;
   onEdit?: (id: string, value: string) => void;
   onDelete?: (id: string, key: string) => void;
 }
 
 export function TranslationRow({
   translation,
+  isSelected = false,
+  onSelect,
   onEdit,
   onDelete,
 }: TranslationRowProps) {
   const [value, setValue] = useState(translation.value);
+  const [copied, setCopied] = useState(false);
   const cancelRef = useRef(false);
 
   useEffect(() => {
@@ -58,8 +63,24 @@ export function TranslationRow({
     }
   }
 
+  function copyKey() {
+    navigator.clipboard.writeText(translation.keyName).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }
+
   return (
     <tr className="hover:bg-white dark:hover:bg-slate-800/40 transition-colors group bg-white/40 dark:bg-transparent">
+      <td className="pl-3 pr-0 py-4 w-10">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={(e) => onSelect?.(translation.id, e.target.checked)}
+          className="size-4 rounded border-slate-300 dark:border-slate-600 text-primary focus:ring-primary/20 cursor-pointer"
+        />
+      </td>
+
       <td className="px-6 py-4">
         <span className="text-xs font-medium px-2 py-1 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
           {translation.module}
@@ -67,12 +88,23 @@ export function TranslationRow({
       </td>
 
       <td className="px-6 py-4">
-        <code
-          className="text-xs text-primary font-mono truncate block"
-          title={translation.keyName}
-        >
-          {translation.keyName}
-        </code>
+        <div className="flex items-center gap-1">
+          <code
+            className="text-xs text-primary font-mono truncate"
+            title={translation.keyName}
+          >
+            {translation.keyName}
+          </code>
+          <button
+            onClick={copyKey}
+            className="p-0.5 rounded text-slate-300 hover:text-primary opacity-0 group-hover:opacity-100 transition-all shrink-0"
+            title="Copy key"
+          >
+            <span className="material-symbols-outlined text-[14px]">
+              {copied ? "check" : "content_copy"}
+            </span>
+          </button>
+        </div>
       </td>
 
       <td className="px-6 py-4">
