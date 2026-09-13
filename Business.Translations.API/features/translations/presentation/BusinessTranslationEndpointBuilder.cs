@@ -1,5 +1,4 @@
 using System.Data;
-using System.Text.Json;
 using Business.Translations.Configuration;
 using Business.Translations.DataSources;
 using Business.Translations.DTOs;

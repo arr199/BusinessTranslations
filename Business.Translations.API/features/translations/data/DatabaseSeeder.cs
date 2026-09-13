@@ -14,7 +14,7 @@ public static class DatabaseSeeder
         await connection.OpenAsync(cancellationToken);
 
         Console.WriteLine("Seeding Database");
-
+        
         // Minimal dummy seed (idempotent)
         const string sql =
             @"

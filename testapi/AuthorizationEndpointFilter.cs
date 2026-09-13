@@ -24,4 +24,6 @@ public class AuthorizationEndpointFilter : IEndpointFilter
 
         return await next(context);
     }
+
 }
+

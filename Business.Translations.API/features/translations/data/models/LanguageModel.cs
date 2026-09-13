@@ -28,4 +28,5 @@ public class LanguageModel
             UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
         };
     }
+    
 }
