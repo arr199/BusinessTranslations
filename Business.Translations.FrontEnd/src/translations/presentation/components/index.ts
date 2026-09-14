@@ -16,5 +16,5 @@ export { NewTranslationModal } from "./modals/new-translation-modal";
 export { NewLanguageModal } from "./modals/new-language-modal";
 export { NewModuleModal } from "./modals/new-module-modal";
 export { DatabaseSchemaModal } from "./modals/database-schema-modal";
-export { TableSkeleton, LoadingSpinner } from "./loading-skeleton";
+export { TableSkeletonRows, LoadingSpinner } from "./loading-skeleton";
 export { ErrorBanner } from "./error-banner";

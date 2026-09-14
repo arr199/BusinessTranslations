@@ -1,10 +1,12 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { TranslationRow } from "./translation-row";
+import { TableSkeletonRows } from "./loading-skeleton";
 import type { Translation } from "../../domain/types";
 
 interface TranslationTableProps {
   translations: Translation[];
   hasActiveFilters?: boolean;
+  isLoading?: boolean;
   selectedIds?: Set<string>;
   onSelectRow?: (id: string, selected: boolean) => void;
   onSelectAll?: (selected: boolean) => void;
@@ -34,6 +36,7 @@ function loadWidths(): number[] {
 export function TranslationTable({
   translations,
   hasActiveFilters = false,
+  isLoading = false,
   selectedIds = new Set(),
   onSelectRow,
   onSelectAll,
@@ -157,7 +160,9 @@ export function TranslationTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-          {translations.length === 0 ? (
+          {isLoading ? (
+            <TableSkeletonRows />
+          ) : translations.length === 0 ? (
             <tr>
               <td colSpan={6} className="py-16">
                 <div className="text-center px-6 max-w-sm mx-auto">

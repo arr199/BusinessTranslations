@@ -1508,6 +1508,43 @@ test.describe("Empty state", () => {
 
     await expect(page.getByText("No translations found")).toBeVisible();
   });
+
+  test("table headers stay put while translations load when switching modules", async ({
+    page,
+  }) => {
+    await mockApi(page);
+
+    // Slow response only for the Billing module
+    await page.route("**/bt/translations?*", async (route: Route) => {
+      const url = new URL(route.request().url());
+      if (url.searchParams.get("moduleId") === "2") {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+      await route.fulfill({
+        json: {
+          ...OK,
+          data: TRANSLATIONS,
+          totalCount: TRANSLATIONS.length,
+        },
+      });
+    });
+
+    await page.goto("/");
+    await expect(page.locator("thead input[type=checkbox]")).toBeVisible();
+
+    await page.locator("aside button", { hasText: "Billing" }).click();
+
+    // While the fetch is pending, the real header (with its checkbox) must
+    // stay visible — no full-table skeleton swap.
+    await expect(
+      page.locator("thead input[type=checkbox]"),
+    ).toBeVisible({ timeout: 1000 });
+    await expect(page.locator("tbody tr.animate-pulse").first()).toBeVisible();
+
+    await expect(page.getByText("invoice.total")).toBeVisible({
+      timeout: 5000,
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------

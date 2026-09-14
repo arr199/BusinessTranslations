@@ -13,7 +13,6 @@ import {
   NewLanguageModal,
   NewModuleModal,
   DatabaseSchemaModal,
-  TableSkeleton,
   ErrorBanner,
 } from "../components";
 import { useDarkMode } from "../hooks/use-dark-mode";
@@ -421,20 +420,17 @@ export function TranslationDashboard() {
 
           {error && <ErrorBanner message={error} onDismiss={clearError} />}
 
-          {isLoading ? (
-            <TableSkeleton />
-          ) : (
-            <TranslationTable
-              translations={translations}
-              hasActiveFilters={hasActiveFilters}
-              selectedIds={selectedIds}
-              onSelectRow={handleSelectRow}
-              onSelectAll={handleSelectAll}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onAddTranslation={() => setIsNewTranslationOpen(true)}
-            />
-          )}
+          <TranslationTable
+            translations={translations}
+            hasActiveFilters={hasActiveFilters}
+            isLoading={isLoading}
+            selectedIds={selectedIds}
+            onSelectRow={handleSelectRow}
+            onSelectAll={handleSelectAll}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onAddTranslation={() => setIsNewTranslationOpen(true)}
+          />
 
           <Footer />
 
