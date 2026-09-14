@@ -16,6 +16,7 @@ export const useTranslationStore = create<TranslationStore>((set) => ({
   selectedModule: "all",
   currentPage: 1,
   itemsPerPage: 50,
+  selectedIds: new Set<string>(),
   isLoadingTranslations: false,
   isLoadingModules: false,
   isLoadingLanguages: false,
@@ -255,11 +256,25 @@ export const useTranslationStore = create<TranslationStore>((set) => ({
   },
 
   // Filters
-  setSearchValue: (searchValue) => set({ searchValue }),
-  setSelectedLanguage: (selectedLanguage) => set({ selectedLanguage }),
-  setSelectedModule: (selectedModule) => set({ selectedModule }),
-  setCurrentPage: (currentPage) => set({ currentPage }),
-  setItemsPerPage: (itemsPerPage) => set({ itemsPerPage }),
+  setSearchValue: (searchValue) => set({ searchValue, selectedIds: new Set() }),
+  setSelectedLanguage: (selectedLanguage) =>
+    set({ selectedLanguage, selectedIds: new Set() }),
+  setSelectedModule: (selectedModule) =>
+    set({ selectedModule, selectedIds: new Set() }),
+  setCurrentPage: (currentPage) => set({ currentPage, selectedIds: new Set() }),
+  setItemsPerPage: (itemsPerPage) =>
+    set({ itemsPerPage, selectedIds: new Set() }),
+
+  // Bulk selection
+  toggleRowSelection: (id, selected) =>
+    set((state) => {
+      const next = new Set(state.selectedIds);
+      if (selected) next.add(id);
+      else next.delete(id);
+      return { selectedIds: next };
+    }),
+  selectAllRows: (ids) => set({ selectedIds: new Set(ids) }),
+  clearSelection: () => set({ selectedIds: new Set() }),
 
   clearError: () => set({ error: null }),
 }));
@@ -277,6 +292,7 @@ interface TranslationStore {
   selectedModule: string;
   currentPage: number;
   itemsPerPage: number;
+  selectedIds: Set<string>;
 
   // Loading states
   isLoadingTranslations: boolean;
@@ -314,6 +330,11 @@ interface TranslationStore {
   setSelectedModule: (module: string) => void;
   setCurrentPage: (page: number) => void;
   setItemsPerPage: (items: number) => void;
+
+  // Bulk selection actions
+  toggleRowSelection: (id: string, selected: boolean) => void;
+  selectAllRows: (ids: string[]) => void;
+  clearSelection: () => void;
 
   // Clear error
   clearError: () => void;

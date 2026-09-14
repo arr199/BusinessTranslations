@@ -786,6 +786,22 @@ test.describe("Translation table â€” row selection", () => {
     expect(after).toBe(before);
   });
 
+  test("selection bar clears when switching modules", async ({ page }) => {
+    await mockApi(page);
+    await page.goto("/");
+    await expect(page.locator("tbody tr").first()).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+
+    await page.locator("tbody input[type=checkbox]").first().check();
+    await expect(page.getByTestId("selection-bar")).toBeVisible();
+
+    await page.locator("aside button", { hasText: "Billing" }).click();
+    await page.waitForTimeout(500);
+
+    await expect(page.getByTestId("selection-bar")).not.toBeVisible();
+    await expect(page.getByText("1 selected")).not.toBeVisible();
+  });
+
   test("selection bar floats above the footer, bottom-centered", async ({
     page,
   }) => {

@@ -164,23 +164,19 @@ export function TranslationDashboard() {
     fetchTranslations,
   ]);
 
-  // Bulk selection
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // Bulk selection (store-managed so filter changes clear it)
+  const { selectedIds, toggleRowSelection, selectAllRows, clearSelection } =
+    useTranslationStore();
 
   function handleSelectRow(id: string, selected: boolean) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (selected) next.add(id);
-      else next.delete(id);
-      return next;
-    });
+    toggleRowSelection(id, selected);
   }
 
   function handleSelectAll(selected: boolean) {
     if (selected) {
-      setSelectedIds(new Set(translations.map((t) => t.id)));
+      selectAllRows(translations.map((t) => t.id));
     } else {
-      setSelectedIds(new Set());
+      clearSelection();
     }
   }
 
@@ -195,7 +191,7 @@ export function TranslationDashboard() {
     setBulkDeleteModal(false);
     try {
       await bulkDeleteTranslations(ids);
-      setSelectedIds(new Set());
+      clearSelection();
       toast.success(`${ids.length} translation(s) deleted.`);
     } catch {
       toast.error("Failed to delete translations.");
