@@ -126,6 +126,11 @@ ipch/
 
 # Visual Studio Trace Files
 *.e2e
+# Re-include the Playwright E2E project folder, accidentally matched by *.e2e above
+!Business.Translations.E2E/
+# Playwright artifacts
+Business.Translations.E2E/playwright-report/
+Business.Translations.E2E/.cache/
 
 # TFS 2012 Local Workspace
 $tf/

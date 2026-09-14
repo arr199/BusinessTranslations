@@ -6,6 +6,7 @@ import {
   FilterBar,
   TranslationTable,
   Footer,
+  SelectionBar,
   DeleteConfirmModal,
   ConfirmNameModal,
   NewTranslationModal,
@@ -429,7 +430,6 @@ export function TranslationDashboard() {
               selectedIds={selectedIds}
               onSelectRow={handleSelectRow}
               onSelectAll={handleSelectAll}
-              onBulkDelete={handleBulkDelete}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onAddTranslation={() => setIsNewTranslationOpen(true)}
@@ -437,6 +437,12 @@ export function TranslationDashboard() {
           )}
 
           <Footer />
+
+          <SelectionBar
+            count={selectedIds.size}
+            onDelete={handleBulkDelete}
+            onClear={() => handleSelectAll(false)}
+          />
         </main>
       ) : (
         <SettingsPage

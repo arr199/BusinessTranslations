@@ -4,6 +4,7 @@ export { Header } from "./header";
 export { FilterBar } from "./filter-bar";
 export { TranslationTable } from "./translation-table";
 export { TranslationRow } from "./translation-row";
+export { SelectionBar } from "./selection-bar";
 export { Footer } from "./footer";
 export { Modal } from "./modals/modal";
 export { Dropdown } from "./dropdown";

@@ -8,7 +8,6 @@ interface TranslationTableProps {
   selectedIds?: Set<string>;
   onSelectRow?: (id: string, selected: boolean) => void;
   onSelectAll?: (selected: boolean) => void;
-  onBulkDelete?: () => void;
   onEdit?: (id: string, value: string) => void;
   onDelete?: (id: string, key: string) => void;
   onAddTranslation?: () => void;
@@ -38,7 +37,6 @@ export function TranslationTable({
   selectedIds = new Set(),
   onSelectRow,
   onSelectAll,
-  onBulkDelete,
   onEdit,
   onDelete,
   onAddTranslation,
@@ -145,27 +143,6 @@ export function TranslationTable({
 
   return (
     <section className="flex-1 overflow-auto bg-slate-50 dark:bg-[#0b1219]">
-      {selectedIds.size > 0 && (
-        <div className="sticky top-0 z-20 flex items-center gap-3 px-6 py-2 bg-primary/10 border-b border-primary/20">
-          <span className="text-sm font-medium text-primary">
-            {selectedIds.size} selected
-          </span>
-          <button
-            onClick={onBulkDelete}
-            className="flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors"
-          >
-            <span className="material-symbols-outlined text-sm">delete</span>
-            Delete
-          </button>
-          <button
-            onClick={() => onSelectAll?.(false)}
-            className="ml-auto text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
-          >
-            Clear selection
-          </button>
-        </div>
-      )}
-
       <table className="w-full text-left border-collapse table-fixed">
         <thead className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-10 shadow-sm">
           <tr>
