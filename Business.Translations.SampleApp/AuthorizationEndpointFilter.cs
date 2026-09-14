@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http;
 
-namespace testapi;
+namespace Business.Translations.SampleApp;
 
 /// <summary>
 /// Example endpoint filter that checks authorization before allowing access.

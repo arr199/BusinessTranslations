@@ -12,11 +12,23 @@ services:
       test:
         [
           "CMD-SHELL",
-          '/opt/mssql-tools2/bin/sqlcmd -S localhost -U sa -P "YourStr0ng!Pass" -Q "SELECT 1" -b',
+          '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "YourStr0ng!Pass" -Q "SELECT 1" -b -o /dev/null',
         ]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  sqlserver-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: "YourStr0ng!Pass"
+    volumes:
+      - ./scripts/init-db.sh:/init-db.sh:ro
+    entrypoint: ["/bin/bash", "/init-db.sh"]
+    restart: "no"
 
   mongodb:
     image: mongo:8

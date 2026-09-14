@@ -125,33 +125,44 @@ Business.Translations.FrontEnd/         # React dashboard UI (embedded in NuGet 
 │   └── auth/                          # (placeholder for future auth UI)
 └── dist/                              # Vite build output → served as static files
 
-testapi/                                # Minimal API host for local development
+Business.Translations.SampleApp/        # Sample host app for local development
 ├── Program.cs                         # Wires up UseBusinessTranslations() with SQL Server
 └── appsettings.json                   # ConnectionStrings:TranslationsDb
 ```
 
 ## Development
 
-```bash
-# Run the test API
-cd testapi
-dotnet run
+To develop in this project, run the **`Business.Translations.SampleApp`** project — a sample host application that wires up the package like a real app would:
 
-# Run the frontend dev server (hot reload)
+```bash
+# Start the local database first (SQL Server + auto-created TranslationsAPI database)
+docker compose up -d
+
+# Run the sample app
+dotnet run --project Business.Translations.SampleApp
+```
+
+Then open the dashboard at **http://localhost:5100/bt/dashboard**. On first load the app creates the tables (and seeds sample data in DEBUG builds).
+
+Optional: run the frontend dev server for hot reload while working on the dashboard UI:
+
+```bash
 cd Business.Translations.FrontEnd
 npm install
 npm run dev
 ```
 
+Note: the Vite dev server has no API proxy — to exercise the real backend, build the FrontEnd and open the dashboard through `Business.Translations.SampleApp`.
+
 ### Docker
 
-Spin up a local SQLServer/mongodb database:
+Spin up a local SQL Server/MongoDB database:
 
 ```bash
 docker compose up
 ```
 
-SQL Server will be available at `localhost:1433` (sa / `YourStr0ng!Pass`).
+SQL Server will be available at `localhost:1433` (sa / `YourStr0ng!Pass`). An init script (`scripts/init-db.sh`, run by the `sqlserver-init` compose service) creates the `TranslationsAPI` database automatically on fresh volumes — the tables are then created by the app via `/bt/createTables`.
 
 To stop and clean up:
 

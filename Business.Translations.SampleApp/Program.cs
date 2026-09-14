@@ -1,5 +1,5 @@
 using Business.Translations.Extensions;
-using testapi;
+using Business.Translations.SampleApp;
 
 var builder = WebApplication.CreateBuilder(args);
 
