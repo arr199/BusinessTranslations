@@ -108,36 +108,6 @@ export function TranslationTable({
       </span>
     );
   }
-
-  if (translations.length === 0) {
-    return (
-      <section className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-[#0b1219]">
-        <div className="text-center px-6 py-16 max-w-sm">
-          <span className="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600 mb-4 block">
-            {hasActiveFilters ? "search_off" : "translate"}
-          </span>
-          <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            {hasActiveFilters ? "No translations found" : "No translations yet"}
-          </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-            {hasActiveFilters
-              ? "Try adjusting your search or filter criteria."
-              : "Get started by adding your first translation key."}
-          </p>
-          {!hasActiveFilters && onAddTranslation && (
-            <button
-              onClick={onAddTranslation}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold bg-primary hover:bg-primary/90 text-white transition-colors"
-            >
-              <span className="material-symbols-outlined text-sm">add</span>
-              Add Translation
-            </button>
-          )}
-        </div>
-      </section>
-    );
-  }
-
   const allSelected =
     translations.length > 0 && selectedIds.size === translations.length;
 
@@ -187,16 +157,49 @@ export function TranslationTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-          {translations.map((translation) => (
-            <TranslationRow
-              key={translation.id}
-              translation={translation}
-              isSelected={selectedIds.has(translation.id)}
-              onSelect={onSelectRow}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          ))}
+          {translations.length === 0 ? (
+            <tr>
+              <td colSpan={6} className="py-16">
+                <div className="text-center px-6 max-w-sm mx-auto">
+                  <span className="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600 mb-4 block">
+                    {hasActiveFilters ? "search_off" : "translate"}
+                  </span>
+                  <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    {hasActiveFilters
+                      ? "No translations found"
+                      : "No translations yet"}
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                    {hasActiveFilters
+                      ? "Try adjusting your search or filter criteria."
+                      : "Get started by adding your first translation key."}
+                  </p>
+                  {!hasActiveFilters && onAddTranslation && (
+                    <button
+                      onClick={onAddTranslation}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold bg-primary hover:bg-primary/90 text-white transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-sm">
+                        add
+                      </span>
+                      Add Translation
+                    </button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ) : (
+            translations.map((translation) => (
+              <TranslationRow
+                key={translation.id}
+                translation={translation}
+                isSelected={selectedIds.has(translation.id)}
+                onSelect={onSelectRow}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            ))
+          )}
         </tbody>
       </table>
     </section>

@@ -775,6 +775,8 @@ test.describe("Translation table â€” row selection", () => {
   test("selecting a row does not shift the table layout", async ({ page }) => {
     const firstRow = page.locator("tbody tr").first();
     await expect(firstRow).toBeVisible();
+    // Font swap can reflow rows — wait for it before measuring
+    await page.evaluate(() => document.fonts.ready);
     const before = (await stableBox(firstRow)).y;
 
     await page.locator("tbody input[type=checkbox]").first().check();
@@ -788,6 +790,7 @@ test.describe("Translation table â€” row selection", () => {
     page,
   }) => {
     await expect(page.locator("tbody tr").first()).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
     await page.locator("tbody input[type=checkbox]").first().check();
     const bar = page.getByTestId("selection-bar");
     await expect(bar).toBeVisible();
@@ -1476,6 +1479,34 @@ test.describe("Empty state", () => {
     await expect(
       page.getByText("Try adjusting your search or filter criteria."),
     ).toBeVisible();
+  });
+
+  test("table headers stay visible when the selected module has no translations", async ({
+    page,
+  }) => {
+    await mockApi(page);
+
+    // Add a module that has no translations
+    await page.route("**/bt/modules", async (route: Route) => {
+      await route.fulfill({
+        json: {
+          ...OK,
+          data: [...MODULES, { id: 3, name: "Empty", slug: "empty", icon: "block" }],
+        },
+      });
+    });
+
+    await page.goto("/");
+    await page.locator("aside button", { hasText: "Empty" }).click();
+    await page.waitForTimeout(500);
+
+    const thead = page.locator("thead");
+    await expect(thead).toBeVisible();
+    await expect(thead.getByText("Module")).toBeVisible();
+    await expect(thead.getByText("Key")).toBeVisible();
+    await expect(thead.getByText("Language")).toBeVisible();
+
+    await expect(page.getByText("No translations found")).toBeVisible();
   });
 });
 
