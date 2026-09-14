@@ -25,7 +25,7 @@ public static class UseBusinessTranslationsExtension
         if (configuration.Provider == DatabaseProvider.None)
         {
             throw new InvalidOperationException(
-                "No database provider configured. Call UseSqlServer() inside UseBusinessTranslations options."
+                "No database provider configured. Call UseSqlServerdo it() inside UseBusinessTranslations options."
             );
         }
 
@@ -42,6 +42,25 @@ public static class UseBusinessTranslationsExtension
             configuration.Provider,
             configuration.BasePath
         );
+
+        app.Lifetime.ApplicationStarted.Register(() =>
+        {
+            var address = app.Urls.FirstOrDefault();
+            if (!string.IsNullOrEmpty(address))
+            {
+                logger.LogInformation(
+                    "Business.Translations dashboard available at {DashboardUrl}",
+                    $"{address}/{configuration.BasePath}/dashboard"
+                );
+            }
+            else
+            {
+                logger.LogInformation(
+                    "Business.Translations dashboard available at /{BasePath}/dashboard",
+                    configuration.BasePath
+                );
+            }
+        });
 
         BusinessTranslationEndpointBuilder.RegisterEndpoints(app, configuration, logger);
 
