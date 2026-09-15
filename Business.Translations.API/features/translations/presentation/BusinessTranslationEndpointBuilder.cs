@@ -218,6 +218,57 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
             }
         );
 
+        endpoints.MapPost(
+            "translations/bulk",
+            async ([FromBody] BulkCreateTranslationsRequest body) =>
+            {
+                try
+                {
+                    await ValidationService.ValidateAsync(body);
+                    var summary = await ds.BulkUpsertTranslationsAsync(body);
+                    logger.LogInformation(
+                        "Bulk upsert translations — Created={Created}, Updated={Updated}, Skipped={Skipped}, Failed={Failed}",
+                        summary.Created,
+                        summary.Updated,
+                        summary.Skipped.Count,
+                        summary.Failed.Count
+                    );
+                    return Results.Ok(
+                        new BulkCreateTranslationsResponse
+                        {
+                            Success = true,
+                            Message = "Bulk import processed.",
+                            Data = summary,
+                        }
+                    );
+                }
+                catch (ValidationException ex)
+                {
+                    logger.LogWarning(
+                        "Validation failed bulk importing translations: {Message}",
+                        ex.Message
+                    );
+                    return Results.Json(
+                        new ApiResponse { Success = false, Message = ex.Message },
+                        statusCode: 400
+                    );
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error bulk importing translations");
+                    return Results.Json(
+                        new ApiResponse
+                        {
+                            Success = false,
+                            Message = "Error bulk importing translations.",
+                            Error = ex.Message,
+                        },
+                        statusCode: 500
+                    );
+                }
+            }
+        );
+
         endpoints.MapPut(
             "translations/{id:int}",
             async (int id, [FromBody] UpdateTranslationRequest body) =>

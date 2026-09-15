@@ -79,9 +79,11 @@ All endpoints are prefixed with `/{basePath}` (default: `/bt`).
 | GET    | `/bt/dashboard`         | UI dashboard                                                                   |
 | POST   | `/bt/createTables`      | Create database tables                                                         |
 | GET    | `/bt/translations`      | List translations (supports `?moduleId=&languageId=&keywords=&limit=&offset=`) |
-| POST   | `/bt/translations`      | Create a translation                                                           |
-| PUT    | `/bt/translations/{id}` | Update a translation                                                           |
-| DELETE | `/bt/translations/{id}` | Delete a translation                                                           |
+| POST   | `/bt/translations/bulk` | Bulk upsert translations (max 10000 rows) — used by CSV import |
+| POST   | `/bt/translations`      | Create a translation                                                          |
+| PUT    | `/bt/translations/{id}` | Update a translation                                                          |
+| DELETE | `/bt/translations/{id}` | Delete a translation                                                          |
+| DELETE | `/bt/translations`      | Delete multiple translations (`{ ids: number[] }`)                             |
 | GET    | `/bt/modules`           | List modules                                                                   |
 | POST   | `/bt/modules`           | Create a module                                                                |
 | PUT    | `/bt/modules/{id}`      | Update a module                                                                |

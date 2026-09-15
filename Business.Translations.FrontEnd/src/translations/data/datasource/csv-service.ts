@@ -34,7 +34,7 @@ export function parseCsvFile(
       }
 
       const headerLine = lines[0].toLowerCase();
-      const headers = parseCsvLine(headerLine);
+      const headers = parseCsvLine(headerLine).map((h) => h.trim());
 
       const moduleIdx = headers.indexOf("module");
       const keyIdx = headers.indexOf("keyname");
@@ -58,10 +58,10 @@ export function parseCsvFile(
       const rows = lines.slice(1).map((line) => {
         const cols = parseCsvLine(line);
         return {
-          module: cols[moduleIdx] ?? "",
-          keyName: cols[keyIdx] ?? "",
-          languageCode: cols[langIdx] ?? "",
-          value: cols[valueIdx] ?? "",
+          module: (cols[moduleIdx] ?? "").trim(),
+          keyName: (cols[keyIdx] ?? "").trim(),
+          languageCode: (cols[langIdx] ?? "").trim(),
+          value: (cols[valueIdx] ?? "").trim(),
         };
       });
 

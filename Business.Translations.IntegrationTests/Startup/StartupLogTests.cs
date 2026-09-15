@@ -1,9 +1,10 @@
 using Business.Translations.Extensions;
+using Business.Translations.IntegrationTests.Factories;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 
-namespace Business.Translations.IntegrationTests;
+namespace Business.Translations.IntegrationTests.Startup;
 
 public class StartupLogTests
 {

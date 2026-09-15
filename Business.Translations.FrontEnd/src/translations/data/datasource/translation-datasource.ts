@@ -1,7 +1,9 @@
 import { ApiError } from "../../../../core/errors/Errors";
 import type {
+  BtBulkImportResponse,
   BtGetTranslationsResponse,
   BtTranslationModel,
+  CsvTranslationRow,
   Translation,
 } from "../../domain/types";
 import { fetchApi } from "./fetch-api-helper";
@@ -76,6 +78,19 @@ export const translationsDataSource = {
       method: "DELETE",
       body: JSON.stringify({ ids: ids.map(Number) }),
     }),
+
+  bulkCreate: async (rows: CsvTranslationRow[]) => {
+    const response = await fetchApi<BtBulkImportResponse>("/bt/translations/bulk", {
+      method: "POST",
+      body: JSON.stringify({ rows }),
+    });
+
+    if (!response.success) {
+      throw new ApiError(500, response.error || response.message);
+    }
+
+    return response.data;
+  },
 };
 
 function normalizeStatus(status: string): Translation["status"] {

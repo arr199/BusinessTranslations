@@ -112,6 +112,7 @@ cd Business.Translations.FrontEnd && pnpm run lint && pnpm run dev
 | GET | `/bt/dashboard` | React SPA |
 | POST | `/bt/createTables` | Creates tables, idempotent |
 | GET/POST | `/bt/translations` | List: `?moduleId=&languageId=&keywords=&limit=&offset=` |
+| POST | `/bt/translations/bulk` | CSV-import upsert: body `{ rows: [{ module, keyName, languageCode, value }] }`, max 10000; returns `{ created, updated, skipped[], failed[] }` |
 | DELETE | `/bt/translations` | Bulk delete, body `{ ids: number[] }` |
 | PUT/DELETE | `/bt/translations/{id}` | |
 | GET/POST | `/bt/modules` | |

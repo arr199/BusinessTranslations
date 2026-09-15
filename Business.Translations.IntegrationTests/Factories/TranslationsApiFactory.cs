@@ -2,7 +2,7 @@ using Business.Translations.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Testcontainers.MsSql;
 
-namespace Business.Translations.IntegrationTests;
+namespace Business.Translations.IntegrationTests.Factories;
 
 public class TranslationsApiFactory : IAsyncLifetime
 {

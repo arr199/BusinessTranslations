@@ -2,7 +2,9 @@ using System.Net;
 using System.Text.Json;
 using FluentAssertions;
 
-namespace Business.Translations.IntegrationTests;
+using Business.Translations.IntegrationTests.Factories;
+
+namespace Business.Translations.IntegrationTests.Translations;
 
 public class TranslationsEndpointTests : IClassFixture<TranslationsApiFactory>
 {

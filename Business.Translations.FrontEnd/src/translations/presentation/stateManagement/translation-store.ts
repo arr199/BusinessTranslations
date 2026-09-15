@@ -1,5 +1,10 @@
 import { create } from "zustand";
-import type { Translation, UiLanguage } from "../../domain/types";
+import type {
+  Translation,
+  UiLanguage,
+  BulkImportSummary,
+  CsvTranslationRow,
+} from "../../domain/types";
 import type { Module } from "../../domain/types";
 import { translationsDataSource } from "../../data/datasource/translation-datasource";
 import { modulesDataSource } from "../../data/datasource/module-datasource";
@@ -128,6 +133,23 @@ export const useTranslationStore = create<TranslationStore>((set) => ({
           error instanceof Error
             ? error.message
             : "Failed to delete translations",
+      });
+      throw error;
+    }
+  },
+
+  importTranslations: async (rows) => {
+    set({ error: null });
+    try {
+      const summary = await translationsDataSource.bulkCreate(rows);
+      await useTranslationStore.getState().fetchTranslations();
+      return summary;
+    } catch (error) {
+      set({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to import translations",
       });
       throw error;
     }
@@ -312,6 +334,7 @@ interface TranslationStore {
   ) => Promise<void>;
   deleteTranslation: (id: string) => Promise<void>;
   bulkDeleteTranslations: (ids: string[]) => Promise<void>;
+  importTranslations: (rows: CsvTranslationRow[]) => Promise<BulkImportSummary>;
 
   // Module actions
   fetchModules: () => Promise<void>;

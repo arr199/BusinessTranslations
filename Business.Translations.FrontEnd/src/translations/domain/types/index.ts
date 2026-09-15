@@ -72,6 +72,32 @@ export type BtGetTranslationsResponse = {
   totalCount: number;
 };
 
+export type CsvTranslationRow = {
+  module: string;
+  keyName: string;
+  languageCode: string;
+  value: string;
+};
+
+export type TranslationRowOutcome = {
+  key: string;
+  reason: string;
+};
+
+export type BulkImportSummary = {
+  created: number;
+  updated: number;
+  skipped: TranslationRowOutcome[];
+  failed: TranslationRowOutcome[];
+};
+
+export type BtBulkImportResponse = {
+  success: boolean;
+  message: string;
+  error: string | null;
+  data: BulkImportSummary;
+};
+
 export type BtGetModulesResponse = {
   success: boolean;
   message: string;

@@ -12,6 +12,7 @@ import {
   NewTranslationModal,
   NewLanguageModal,
   NewModuleModal,
+  ImportSummaryModal,
   DatabaseSchemaModal,
   ErrorBanner,
 } from "../components";
@@ -21,7 +22,7 @@ import { useInitializeData } from "../hooks/use-Initialize-data";
 import { runMigration } from "../../data/migration-service";
 import { SettingsPage } from "./settings-page";
 import { ToastContainer, toast } from "../components/toast";
-import type { Translation } from "../../domain/types";
+import type { Translation, BulkImportSummary } from "../../domain/types";
 import {
   exportTranslationsCsv,
   parseCsvFile,
@@ -68,6 +69,9 @@ export function TranslationDashboard() {
     id: string;
     name: string;
   }>({ isOpen: false, id: "", name: "" });
+  const [importSummary, setImportSummary] = useState<BulkImportSummary | null>(
+    null,
+  );
 
   // Initialize data from API
   const {
@@ -97,6 +101,7 @@ export function TranslationDashboard() {
     updateTranslation,
     deleteTranslation,
     bulkDeleteTranslations,
+    importTranslations,
     createTranslation,
     createModule,
     createLanguage,
@@ -211,32 +216,8 @@ export function TranslationDashboard() {
   async function handleImport(file: File) {
     try {
       const rows = await parseCsvFile(file);
-      let created = 0;
-
-      for (const row of rows) {
-        const mod = storeModules.find(
-          (m) => m.name.toLowerCase() === row.module.toLowerCase(),
-        );
-        const lang = storeLanguages.find(
-          (l) => l.code.toLowerCase() === row.languageCode.toLowerCase(),
-        );
-
-        if (!mod || !lang) continue;
-
-        await createTranslation({
-          moduleId: mod.id,
-          languageId: lang.id,
-          module: mod.name,
-          language: lang.name,
-          languageCode: lang.code,
-          keyName: row.keyName,
-          value: row.value,
-          status: "pending",
-        });
-        created++;
-      }
-
-      toast.success(`Imported ${created} translation(s).`);
+      const summary = await importTranslations(rows);
+      setImportSummary(summary);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Import failed.");
     }
@@ -532,6 +513,11 @@ export function TranslationDashboard() {
         itemName={`${selectedIds.size} translation(s)`}
         title="Delete Selected Translations"
         prompt={`Are you sure you want to delete ${selectedIds.size} selected translation(s)?`}
+      />
+
+      <ImportSummaryModal
+        summary={importSummary}
+        onClose={() => setImportSummary(null)}
       />
 
       <ToastContainer />

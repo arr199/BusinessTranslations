@@ -196,6 +196,117 @@ public class TranslationDataSource
         }
     }
 
+    public async Task<BulkImportSummary> BulkUpsertTranslationsAsync(
+        BulkCreateTranslationsRequest dto
+    )
+    {
+        using var connection = new SqlConnection(_config.ConnectionString);
+        await connection.OpenAsync();
+
+        var summary = new BulkImportSummary();
+
+        // Resolve lookups once — modules by name, languages by code
+        var modules = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        await using (var modulesCmd = new SqlCommand(
+            "SELECT Name, Id FROM BTModules",
+            connection
+        ))
+        await using (var reader = await modulesCmd.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                modules[reader.GetString(0)] = reader.GetInt32(1);
+            }
+        }
+
+        var languages = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        await using (var languagesCmd = new SqlCommand(
+            "SELECT Code, Id FROM BTLanguages",
+            connection
+        ))
+        await using (var reader = await languagesCmd.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                languages[reader.GetString(0)] = reader.GetInt32(1);
+            }
+        }
+
+        foreach (var row in dto.Rows)
+        {
+            if (!modules.TryGetValue(row.Module, out var moduleId))
+            {
+                summary.Skipped.Add(new TranslationRowOutcome
+                {
+                    Key = row.KeyName,
+                    Reason = $"Module '{row.Module}' not found.",
+                });
+                continue;
+            }
+
+            if (!languages.TryGetValue(row.LanguageCode, out var languageId))
+            {
+                summary.Skipped.Add(new TranslationRowOutcome
+                {
+                    Key = row.KeyName,
+                    Reason = $"Language '{row.LanguageCode}' not found.",
+                });
+                continue;
+            }
+
+            try
+            {
+                // Upsert on the unique key (ModuleId, KeyName, LanguageId):
+                // update when present, insert when missing.
+                const string upsertSql =
+                    @"DECLARE @Action NVARCHAR(10);
+
+                      UPDATE BTTranslations
+                      SET Value = @Value, UpdatedAt = GETUTCDATE()
+                      WHERE ModuleId = @ModuleId
+                        AND KeyName = @KeyName
+                        AND LanguageId = @LanguageId;
+
+                      IF @@ROWCOUNT = 0
+                      BEGIN
+                          INSERT INTO BTTranslations (ModuleId, LanguageId, KeyName, Value)
+                          VALUES (@ModuleId, @LanguageId, @KeyName, @Value);
+                          SET @Action = 'created';
+                      END
+                      ELSE
+                          SET @Action = 'updated';
+
+                      SELECT @Action AS Outcome;";
+
+                using var cmd = new SqlCommand(upsertSql, connection);
+                cmd.Parameters.AddWithValue("ModuleId", moduleId);
+                cmd.Parameters.AddWithValue("LanguageId", languageId);
+                cmd.Parameters.AddWithValue("KeyName", row.KeyName);
+                cmd.Parameters.AddWithValue("Value", row.Value);
+
+                var outcome = (string?)(await cmd.ExecuteScalarAsync());
+                if (outcome == "created")
+                {
+                    summary.Created++;
+                }
+                else
+                {
+                    summary.Updated++;
+                }
+            }
+            catch (Exception)
+            {
+                summary.Failed.Add(new TranslationRowOutcome
+                {
+                    Key = row.KeyName,
+                    Reason = "Unexpected database error while upserting the row.",
+                });
+            }
+        }
+
+        return summary;
+    }
+
     public async Task UpdateTranslationAsync(int id, UpdateTranslationRequest dto)
     {
         using var connection = new SqlConnection(_config.ConnectionString);

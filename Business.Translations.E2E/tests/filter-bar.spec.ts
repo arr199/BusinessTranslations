@@ -164,16 +164,16 @@ test.describe("CSV Import", () => {
     await expect(fileInput).toHaveClass(/hidden/);
   });
 
-  test("uploading a CSV file calls create translation API", async ({
-    page,
-  }) => {
-    let createCalls = 0;
-    await page.route("**/bt/translations", async (route: Route) => {
+  test("uploading a CSV file calls the bulk import API", async ({ page }) => {
+    let bulkCalled = false;
+    await page.route("**/bt/translations/bulk", async (route: Route) => {
       if (route.request().method() === "POST") {
-        createCalls++;
+        bulkCalled = true;
         await route.fulfill({
-          json: { id: `t-imp-${createCalls}` },
-          status: 201,
+          json: {
+            ...OK,
+            data: { created: 1, updated: 0, skipped: [], failed: [] },
+          },
         });
       } else {
         await route.continue();
@@ -193,6 +193,104 @@ test.describe("CSV Import", () => {
 
     // Wait for processing
     await page.waitForTimeout(500);
-    expect(createCalls).toBeGreaterThanOrEqual(1);
+    expect(bulkCalled).toBe(true);
+  });
+
+  test("trims whitespace from CSV fields before importing", async ({
+    page,
+  }) => {
+    let sentRows: { module: string; keyName: string; languageCode: string; value: string }[] | undefined;
+    await page.route("**/bt/translations/bulk", async (route: Route) => {
+      sentRows = (route.request().postDataJSON() as { rows: typeof sentRows }).rows;
+      await route.fulfill({
+        json: {
+          ...OK,
+          data: { created: 1, updated: 0, skipped: [], failed: [] },
+        },
+      });
+    });
+
+    const csvContent =
+      "module,keyName,languageCode,value\n Authentication , import.key , EN , Padded Value ";
+    const fileInput = page.locator('input[type="file"][accept=".csv"]');
+
+    await fileInput.setInputFiles({
+      name: "import.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from(csvContent),
+    });
+
+    await page.waitForTimeout(500);
+
+    expect(sentRows).toBeDefined();
+    expect(sentRows![0].module).toBe("Authentication");
+    expect(sentRows![0].keyName).toBe("import.key");
+    expect(sentRows![0].languageCode).toBe("EN");
+    expect(sentRows![0].value).toBe("Padded Value");
+  });
+
+  test("importing shows a summary modal with per-row results", async ({
+    page,
+  }) => {
+    await page.route("**/bt/translations/bulk", async (route: Route) => {
+      await route.fulfill({
+        json: {
+          ...OK,
+          data: { created: 2, updated: 1, skipped: [], failed: [] },
+        },
+      });
+    });
+
+    const csvContent =
+      "module,keyName,languageCode,value\nAuth,a.one,EN,One\nAuth,a.two,EN,Two\nAuth,a.one,EN,One-Updated";
+    const fileInput = page.locator('input[type="file"][accept=".csv"]');
+
+    await fileInput.setInputFiles({
+      name: "import.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from(csvContent),
+    });
+
+    const modal = page.getByTestId("import-summary-modal");
+    await expect(modal).toBeVisible();
+    await expect(modal.getByTestId("summary-created").getByText("2")).toBeVisible();
+    await expect(modal.getByTestId("summary-updated").getByText("1")).toBeVisible();
+
+    // Closing the modal dismisses it
+    await modal.getByRole("button", { name: "Close" }).click();
+    await expect(modal).not.toBeVisible();
+  });
+
+  test("summary modal lists skipped rows with reasons", async ({ page }) => {
+    await page.route("**/bt/translations/bulk", async (route: Route) => {
+      await route.fulfill({
+        json: {
+          ...OK,
+          data: {
+            created: 0,
+            updated: 0,
+            skipped: [
+              { key: "import.key", reason: "Module 'Nope_Module' not found." },
+            ],
+            failed: [],
+          },
+        },
+      });
+    });
+
+    const csvContent = "module,keyName,languageCode,value\nNope_Module,import.key,EN,Imported Value";
+    const fileInput = page.locator('input[type="file"][accept=".csv"]');
+
+    await fileInput.setInputFiles({
+      name: "import.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from(csvContent),
+    });
+
+    const modal = page.getByTestId("import-summary-modal");
+    await expect(modal).toBeVisible();
+    await expect(modal.getByTestId("summary-skipped").getByText("1")).toBeVisible();
+    await expect(modal.getByText("import.key")).toBeVisible();
+    await expect(modal.getByText("Module 'Nope_Module' not found.")).toBeVisible();
   });
 });

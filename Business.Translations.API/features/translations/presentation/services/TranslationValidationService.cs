@@ -9,6 +9,9 @@ public static class ValidationService
     public static async Task ValidateAsync(InsertTranslationRequest data) =>
         await new InsertTranslationRequestValidator().ValidateAndThrowAsync(data);
 
+    public static async Task ValidateAsync(BulkCreateTranslationsRequest data) =>
+        await new BulkCreateTranslationsRequestValidator().ValidateAndThrowAsync(data);
+
     public static async Task ValidateAsync(GetTranslationRequest data) =>
         await new GetTranslationRequestValidator().ValidateAndThrowAsync(data);
 
