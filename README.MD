@@ -148,8 +148,8 @@ Optional: run the frontend dev server for hot reload while working on the dashbo
 
 ```bash
 cd Business.Translations.FrontEnd
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 Note: the Vite dev server has no API proxy — to exercise the real backend, build the FrontEnd and open the dashboard through `Business.Translations.SampleApp`.

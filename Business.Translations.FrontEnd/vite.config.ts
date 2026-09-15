@@ -8,9 +8,7 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     react({
-      babel: {
-        plugins: [["babel-plugin-react-compiler"]],
-      },
+      compiler: true,
     }),
   ],
 });

@@ -1,13 +1,14 @@
 {
   "name": "business-translations-e2e",
   "private": true,
+  "packageManager": "pnpm@12.4.1",
   "scripts": {
-    "test": "npx playwright test",
-    "test:headed": "npx playwright test --headed",
-    "test:ui": "npx playwright test --ui",
-    "install": "npx playwright install chromium"
+    "test": "pnpm exec playwright test",
+    "test:headed": "pnpm exec playwright test --headed",
+    "test:ui": "pnpm exec playwright test --ui",
+    "install": "pnpm exec playwright install chromium"
   },
   "devDependencies": {
-    "@playwright/test": "^1.52.0"
+    "@playwright/test": "^1.63.0"
   }
 }
