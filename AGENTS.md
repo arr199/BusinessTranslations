@@ -51,6 +51,9 @@ The API csproj has a `ProjectReference` to the FrontEnd csproj, which runs `pnpm
   - Backend validation/config â†’ `Business.Translations.UnitTests`
   - Backend endpoints/data access â†’ `Business.Translations.IntegrationTests`
   - Frontend UI behavior â†’ `Business.Translations.E2E` (mock API routes like `dashboard.spec.ts` does)
+- **Testing philosophy (behavior over implementation).** Favor integration/E2E tests over unit tests — a test must survive a refactor. Tests assert observable behavior of the real system (endpoints, data access, rendered UI), never implementation details. Never test mock behavior in place of app behavior; mocks are only acceptable at test boundaries (see "Tests" under "Git, Artifacts & Style"). Agents will write whatever tests you allow — these opinions are the guardrail.
+- **Review before done.** After completing a feature (not one-line fixes), run a code-review pass — dispatch a fresh code-review subagent to check the actual diff against the task requirements (via the `requesting-code-review` skill) — and address or explicitly flag every finding before reporting completion.
+- **Skills ship with the repo.** All agent skills (team skills + vendored [superpowers](https://github.com/obra/superpowers) workflow skills) live in `.opencode/skills/` and are auto-discovered by opencode for anyone who clones the project — see `.opencode/skills/README.md`. Update them by copying newer `SKILL.md` folders in and committing.
 - **Feature-based architecture everywhere.** Shared/cross-cutting code â†’ `core/`; feature code â†’ `features/` (backend) or feature folder under `src/` (frontend). No loose one-off files at project roots. Mimic neighboring files before inventing anything.
 
 ### Backend conventions
