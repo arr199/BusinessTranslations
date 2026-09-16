@@ -1,8 +1,7 @@
 using System.Net;
 using System.Text.Json;
-using FluentAssertions;
-
 using Business.Translations.IntegrationTests.Factories;
+using FluentAssertions;
 
 namespace Business.Translations.IntegrationTests.Translations;
 
@@ -38,11 +37,13 @@ public class TranslationsEndpointTests : IClassFixture<TranslationsApiFactory>
     {
         await EnsureTables();
 
+        // Unique values so the DEBUG-seeded sample languages (en/es/fr) never collide
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var code = suffix[..5];
+        var name = $"English_{suffix}";
+
         // Create
-        var createResponse = await _client.PostAsJsonAsync(
-            "/bt/languages",
-            new { code = "en", name = "English" }
-        );
+        var createResponse = await _client.PostAsJsonAsync("/bt/languages", new { code, name });
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
         // Get all
@@ -53,16 +54,15 @@ public class TranslationsEndpointTests : IClassFixture<TranslationsApiFactory>
         languages.Success.Should().BeTrue();
         languages.Data.Should().NotBeNull();
 
-        var languageId = languages.Data!.Value.EnumerateArray().First().GetProperty("id").GetInt32();
+        var created = languages
+            .Data!.Value.EnumerateArray()
+            .Single(l => l.GetProperty("code").GetString() == code);
+        var languageId = created.GetProperty("id").GetInt32();
 
         // Update
         var updateResponse = await _client.PutAsJsonAsync(
             $"/bt/languages/{languageId}",
-            new
-            {
-                code = "en",
-                name = "English (US)",
-            }
+            new { code, name = $"English (US)_{suffix}" }
         );
         updateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -176,7 +176,9 @@ public class TranslationsEndpointTests : IClassFixture<TranslationsApiFactory>
         }
 
         // Get all to find IDs
-        var getBody = await (await _client.GetAsync("/bt/translations")).Content.ReadAsStringAsync();
+        var getBody = await (
+            await _client.GetAsync("/bt/translations")
+        ).Content.ReadAsStringAsync();
         var translations = JsonSerializer.Deserialize<TranslationsResponse>(getBody, JsonOptions)!;
         var ids = translations
             .Data!.Value.EnumerateArray()
@@ -287,10 +289,7 @@ public class TranslationsEndpointTests : IClassFixture<TranslationsApiFactory>
     {
         var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
 
-        await _client.PostAsJsonAsync(
-            "/bt/modules",
-            new { name = $"Mod_{uniqueSuffix}" }
-        );
+        await _client.PostAsJsonAsync("/bt/modules", new { name = $"Mod_{uniqueSuffix}" });
         await _client.PostAsJsonAsync(
             "/bt/languages",
             new { code = uniqueSuffix[..5], name = $"Lang_{uniqueSuffix}" }
