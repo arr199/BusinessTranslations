@@ -1,4 +1,5 @@
 using System.Data;
+using Business.Translations.API.Data;
 using Business.Translations.API.features.translations.data.models;
 using Business.Translations.Configuration;
 using Business.Translations.DTOs;
@@ -53,11 +54,18 @@ public class LanguageDataSource
         cmd.Parameters.AddWithValue("Name", dto.Name.Trim());
         cmd.Parameters.AddWithValue("IsActive", true);
 
-        var rowsAffected = await cmd.ExecuteNonQueryAsync();
-
-        if (rowsAffected <= 0)
+        try
         {
-            throw new DataException("Error inserting new language.");
+            var rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+            if (rowsAffected <= 0)
+            {
+                throw new DataException("Error inserting new language.");
+            }
+        }
+        catch (SqlException ex) when (ex.Number is 2601 or 2627)
+        {
+            throw new ConflictException("A language with the same code or name already exists.");
         }
     }
 

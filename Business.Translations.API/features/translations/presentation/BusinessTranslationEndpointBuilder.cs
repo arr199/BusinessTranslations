@@ -1,4 +1,5 @@
 using System.Data;
+using Business.Translations.API.Data;
 using Business.Translations.Configuration;
 using Business.Translations.DataSources;
 using Business.Translations.DTOs;
@@ -658,6 +659,14 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
                     return Results.Json(
                         new ApiResponse { Success = false, Message = ex.Message },
                         statusCode: 400
+                    );
+                }
+                catch (ConflictException ex)
+                {
+                    logger.LogWarning("Duplicate language rejected: {Message}", ex.Message);
+                    return Results.Json(
+                        new ApiResponse { Success = false, Message = ex.Message },
+                        statusCode: 409
                     );
                 }
                 catch (Exception ex)

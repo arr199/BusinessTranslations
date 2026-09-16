@@ -71,6 +71,20 @@ public class TranslationsEndpointTests : IClassFixture<TranslationsApiFactory>
         deleteResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    [Fact]
+    public async Task Create_Language_Duplicate_Returns_Conflict()
+    {
+        await EnsureTables();
+
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var body = new { code = suffix[..5], name = $"English_{suffix}" };
+
+        await _client.PostAsJsonAsync("/bt/languages", body);
+
+        var duplicateResponse = await _client.PostAsJsonAsync("/bt/languages", body);
+        duplicateResponse.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
     // ─── Modules ────────────────────────────────────────────────────
 
     [Fact]
