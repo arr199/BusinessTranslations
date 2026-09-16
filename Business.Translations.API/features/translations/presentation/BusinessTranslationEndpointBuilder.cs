@@ -37,22 +37,28 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
 
     public static void AddStaticFiles(WebApplication app, BTConfiguration config, ILogger logger)
     {
-        var distPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "dist");
-        if (!Directory.Exists(distPath))
-        {
-            logger.LogWarning(
-                "Dashboard dist folder not found at {DistPath} — static files will not be served",
-                distPath
-            );
-            return;
-        }
-
         app.UseStaticFiles(
             new StaticFileOptions
             {
-                FileProvider = new PhysicalFileProvider(distPath),
+                FileProvider = GetDashboardFileProvider(),
                 RequestPath = "/" + config.BasePath + "/dashboard",
             }
+        );
+    }
+
+    // Physical dist/ wins as a dev override; otherwise serve embedded resources.
+    private static IFileProvider GetDashboardFileProvider()
+    {
+        var distPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "dist");
+
+        if (File.Exists(Path.Combine(distPath, "index.html")))
+        {
+            return new PhysicalFileProvider(distPath);
+        }
+
+        return new EmbeddedFileProvider(
+            typeof(BusinessTranslationEndpointBuilder).Assembly,
+            "Business.Translations.API.dist"
         );
     }
 
@@ -66,18 +72,22 @@ public class BusinessTranslationEndpointBuilder : IBusinessTranslationEndpointBu
             "dashboard",
             async (HttpContext context) =>
             {
-                var path = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "dist",
-                    "index.html"
-                );
-                if (!File.Exists(path))
+                var indexHtml = GetDashboardFileProvider().GetFileInfo("index.html");
+                if (!indexHtml.Exists)
                 {
-                    logger.LogWarning("Dashboard index.html not found at {Path}", path);
+                    logger.LogWarning(
+                        "Dashboard index.html not found — neither physical dist folder nor embedded resources are available"
+                    );
                     context.Response.StatusCode = 404;
                     return;
                 }
-                await context.Response.SendFileAsync(path);
+
+                await using var stream = indexHtml.CreateReadStream();
+                using var reader = new StreamReader(stream);
+                var html = await reader.ReadToEndAsync();
+
+                context.Response.ContentType = "text/html; charset=utf-8";
+                await context.Response.WriteAsync(html);
             }
         );
 

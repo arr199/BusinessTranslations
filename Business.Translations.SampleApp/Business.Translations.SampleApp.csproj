@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Business.Translations.API/Business.Translations.API.csproj" />
-    <!-- <PackageReference Include="BusinessTranslations" Version="1.0.3" /> -->
+    <!-- <PackageReference Include="BusinessTranslations" Version="1.0.0" /> -->
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
   </ItemGroup>
 </Project>

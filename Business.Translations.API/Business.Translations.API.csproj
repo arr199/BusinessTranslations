@@ -5,18 +5,33 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.0.3</Version>
+    <Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <FrameWorkReference Include="Microsoft.AspNetCore.App" />
-    <ProjectReference Include="../Business.Translations.FrontEnd/Business.Translations.FrontEnd.csproj" />
+    <ProjectReference
+      Include="../Business.Translations.FrontEnd/Business.Translations.FrontEnd.csproj"
+      PrivateAssets="All"
+    />
   </ItemGroup>
+
+  <!-- Embeds the FrontEnd dashboard into the assembly so the NuGet package ships it. -->
+  <Target Name="BuildDashboard" BeforeTargets="PrepareForBuild" Condition="'$(BuildDashboardExecuted)' != 'true'">
+    <Exec Command="pnpm run build" WorkingDirectory="$(MSBuildThisFileDirectory)../Business.Translations.FrontEnd" />
+    <ItemGroup>
+      <EmbeddedResource Include="..\Business.Translations.FrontEnd\dist\**\*" KeepDuplicates="false" />
+    </ItemGroup>
+    <ItemGroup>
+      <EmbeddedResource Link="dist\%(RecursiveDir)%(Filename)%(Extension)" />
+    </ItemGroup>
+    <PropertyGroup>
+      <BuildDashboardExecuted>true</BuildDashboardExecuted>
+    </PropertyGroup>
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="12.1.1" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
   </ItemGroup>
 </Project>
-
