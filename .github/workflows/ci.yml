@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Build + .NET tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: "**/pnpm-lock.yaml"
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+
+      - name: Build (embeds dashboard)
+        run: dotnet build
+
+      - name: Unit + integration tests (Testcontainers)
+        run: dotnet test --no-build
+
+  frontend:
+    name: Lint + Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: "**/pnpm-lock.yaml"
+
+      - name: Install FrontEnd dependencies
+        run: pnpm -C Business.Translations.FrontEnd install
+
+      - name: Install E2E dependencies + chromium
+        run: pnpm -C Business.Translations.E2ETests install
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('Business.Translations.E2ETests/pnpm-lock.yaml') }}
+
+      - name: Lint
+        run: pnpm -C Business.Translations.FrontEnd run lint
+
+      - name: E2E tests (Playwright starts Vite)
+        run: pnpm -C Business.Translations.E2ETests run test
