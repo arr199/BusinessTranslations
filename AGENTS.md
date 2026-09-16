@@ -23,7 +23,7 @@ app.UseBusinessTranslations(config =>
 | `Business.Translations.SampleApp/` | Minimal API host mimicking a real app install (ProjectReference to the API project, not the NuGet package); binds `http://localhost:5100` |
 | `Business.Translations.UnitTests/` | xUnit + FluentAssertions + NSubstitute |
 | `Business.Translations.IntegrationTests/` | xUnit + `Microsoft.AspNetCore.Mvc.Testing` + `Testcontainers.MsSql` (needs Docker) |
-| `Business.Translations.E2E/` | Playwright suite (`tests/dashboard.spec.ts`, mocks API routes via `page.route`). **Not in the .sln** â€” a Node project run with npm |
+| `Business.Translations.E2E/` | Playwright suite (`tests/*.spec.ts`, mocks API routes via `page.route`). **Not in the .sln** — a Node project run with pnpm |
 
 ### Backend layout (`Business.Translations.API`)
 
@@ -32,7 +32,7 @@ app.UseBusinessTranslations(config =>
 - `features/translations/data/` â€” datasources (raw SQL via `Microsoft.Data.SqlClient`), models, `DatabaseSeeder`
 - `features/translations/presentation/` â€” `BusinessTranslationEndpointBuilder.cs` (all endpoint registrations), `entities/` (DTOs), `validators/`, `services/` (`ValidationService` static dispatch)
 
-The API csproj has a `ProjectReference` to the FrontEnd csproj, which runs `pnpm run build` before every .NET build and copies `dist/**` into the output. **Building the API requires pnpm/node.**
+The API csproj has a `ProjectReference` to the FrontEnd csproj; its `BuildDashboard` target runs `pnpm run build` (in the FrontEnd folder) and **embeds `dist/**` as resources in the API assembly** — this is how the NuGet package ships the dashboard. Serving uses `EmbeddedFileProvider` (a physical `dist/` folder containing `index.html` next to the app binary wins as a dev override). The ProjectReference is `PrivateAssets="All"` so the FrontEnd never becomes a NuGet dependency. **Building the API requires pnpm/node.**
 
 ## Git, Artifacts & Style
 
@@ -134,10 +134,8 @@ Validation â†’ 400, not found â†’ 404, server errors â†’ 500. Res
 
 ## Known Gaps / Cleanup Backlog
 
-- No `LICENSE`; NuGet package lacks metadata (description, authors, tags). API csproj has a duplicated `<GeneratePackageOnBuild>`.
 - `Business.Translations.SampleApp.csproj` uses `Microsoft.OpenApi` 2.0.0 (NU1903 high-severity advisory, dev-only).
 - No CI (`.github/` empty); frontend has no unit tests (E2E only).
-- README structure section is outdated: says `EndpointBuilder.cs` (actual `BusinessTranslationEndpointBuilder.cs`) and `migrationService.ts` (actual `migration-service.ts`).
 
 ## Roadmap
 

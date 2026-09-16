@@ -6,7 +6,19 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Version>1.0.0</Version>
+    <Description>ASP.NET Core package that adds a translations (i18n) management dashboard and REST API to your application — CRUD for translations, modules and languages, automatic table creation, and an embedded React dashboard.</Description>
+    <Authors>arr199</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.MD</PackageReadmeFile>
+    <PackageTags>i18n;localization;translations;dashboard;aspnetcore</PackageTags>
+    <RepositoryUrl>https://github.com/arr199/BusinessTranslations</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/arr199/BusinessTranslations</PackageProjectUrl>
+    <ReleaseNotes>Initial release: translations management dashboard, CRUD REST API for translations/modules/languages, SQL Server provider, CSV export/import with bulk upsert.</ReleaseNotes>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../README.MD" Pack="true" PackagePath="/" Link="README.MD" />
+  </ItemGroup>
 
   <ItemGroup>
     <FrameWorkReference Include="Microsoft.AspNetCore.App" />
