@@ -45,6 +45,7 @@ The API csproj has a `ProjectReference` to the FrontEnd csproj, which runs `pnpm
 ## Workflow Rules (user-mandated)
 
 - **Never commit.** Make changes, stop, let the user review. No `git commit` / `git push` unless explicitly asked.
+- **Never touch anything outside the project folder — NEVER, EVER.** All work stays strictly inside the repository folder (the directory containing `AGENTS.md`). Do not write, edit, delete, install, or configure anything anywhere else on the machine or network — home directory, global caches, machine config, environment, tools, services, registry, any other drive or system location. If a task seems to require changing something outside the project folder, STOP and explain what is needed so the user can do it themselves.
 - **Never touch unrelated code.** Only modify code required by the task you are currently implementing. Do not refactor, clean up, reformat, or "improve" any code that has nothing to do with the current task.
 - **Never commit secrets.** No API keys, tokens, or non-local-dev connection strings in code, config, logs, or commit messages. Local-dev-only values (Docker SQL `sa` password, `Business.Translations.SampleApp/appsettings.json`) are the accepted exception; real secrets go through user-secrets/env vars. Check diffs for credentials before staging.
 - **Test-first, always.** Write the failing test BEFORE implementation (bug fixes include a regression test reproducing the bug). Suite placement:

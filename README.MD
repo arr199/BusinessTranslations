@@ -156,6 +156,16 @@ pnpm run dev
 
 Note: the Vite dev server has no API proxy — to exercise the real backend, build the FrontEnd and open the dashboard through `Business.Translations.SampleApp`.
 
+### Testing local packages
+
+`local-packages-source/` (repo root) is the local NuGet source, registered in `nuget.config`. When you build the package and want to test it locally, put the `.nupkg` there — the easiest way is to pack straight into it:
+
+```bash
+dotnet pack Business.Translations.API -c Release -o local-packages-source
+```
+
+A plain `dotnet restore` in a consuming project (e.g. `Business.Translations.SampleApp`) then resolves the package from that folder. Remember: **every new build of the package needs a new version number** — NuGet never updates an already-cached version.
+
 ### Docker
 
 Spin up a local SQL Server/MongoDB database:
