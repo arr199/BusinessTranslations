@@ -1,7 +1,7 @@
 {
   "name": "business-translations-e2e-tests",
   "private": true,
-  "packageManager": "pnpm@12.4.1",
+  "packageManager": "pnpm@12.4.2",
   "scripts": {
     "test": "pnpm exec playwright test",
     "test:headed": "pnpm exec playwright test --headed",

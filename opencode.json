@@ -1,0 +1,33 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "formatter": {
+    "csharpier": {
+      "command": ["csharpier", "format", "$FILE"],
+      "extensions": [".cs"]
+    },
+    "prettier": {
+      "command": [
+        "pnpm",
+        "-C",
+        "Business.Translations.FrontEnd",
+        "exec",
+        "prettier",
+        "--write",
+        "$FILE"
+      ],
+      "extensions": [
+        ".md",
+        ".json",
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".css",
+        ".scss",
+        ".html",
+        ".yml",
+        ".yaml"
+      ]
+    }
+  }
+}
