@@ -18,10 +18,11 @@ import {
 } from "../components";
 import { useDarkMode } from "../hooks/use-dark-mode";
 import { useTranslationStore } from "../stateManagement/translation-store";
+import { toast } from "../stateManagement/toast-store";
 import { useInitializeData } from "../hooks/use-Initialize-data";
 import { runMigration } from "../../data/migration-service";
 import { SettingsPage } from "./settings-page";
-import { ToastContainer, toast } from "../components/toast";
+import { ToastContainer } from "../components/toast";
 import type { Translation, BulkImportSummary } from "../../domain/types";
 import {
   exportTranslationsCsv,
@@ -82,11 +83,13 @@ export function TranslationDashboard() {
     tablesNotReady,
   } = useInitializeData();
 
-  useEffect(() => {
-    if (tablesNotReady) {
-      setIsSchemaModalOpen(true);
-    }
-  }, [tablesNotReady]);
+  // Auto-open the schema modal while tables are missing. Adjusting state
+  // during render instead of an effect keeps isSchemaModalOpen as-is.
+  const [tablesNotReadySeen, setTablesNotReadySeen] = useState(false);
+  if (tablesNotReady && !tablesNotReadySeen) {
+    setTablesNotReadySeen(true);
+    setIsSchemaModalOpen(true);
+  }
 
   const {
     translations,

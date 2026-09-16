@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Modal } from "./modal";
 
 interface ConfirmNameModalProps {
@@ -22,9 +22,10 @@ export function ConfirmNameModal({
 }: ConfirmNameModalProps) {
   const [value, setValue] = useState("");
 
-  useEffect(() => {
-    if (isOpen) setValue("");
-  }, [isOpen]);
+  function handleClose() {
+    setValue("");
+    onClose();
+  }
 
   const canConfirm = useMemo(() => {
     const typed = value.trim().toLowerCase();
@@ -33,7 +34,7 @@ export function ConfirmNameModal({
   }, [value, requiredText]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title}>
+    <Modal isOpen={isOpen} onClose={handleClose} title={title}>
       <div className="p-6">
         <div className="flex items-start gap-4 mb-6">
           <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/20">
@@ -59,7 +60,7 @@ export function ConfirmNameModal({
 
         <div className="flex gap-3 justify-end pt-6">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             Cancel
@@ -68,7 +69,7 @@ export function ConfirmNameModal({
             disabled={!canConfirm}
             onClick={() => {
               onConfirm();
-              onClose();
+              handleClose();
             }}
             className="px-4 py-2 rounded-lg text-sm font-bold bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >

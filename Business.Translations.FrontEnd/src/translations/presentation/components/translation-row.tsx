@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import type { Translation } from "../../domain/types";
 
 interface TranslationRowProps {
@@ -20,9 +20,11 @@ export function TranslationRow({
   const [copied, setCopied] = useState(false);
   const cancelRef = useRef(false);
 
-  useEffect(() => {
+  const [prevExternalValue, setPrevExternalValue] = useState(translation.value);
+  if (translation.value !== prevExternalValue) {
+    setPrevExternalValue(translation.value);
     setValue(translation.value);
-  }, [translation.value]);
+  }
 
   function getLanguageBadgeColor(code: string) {
     const colors: Record<string, string> = {
