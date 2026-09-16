@@ -25,9 +25,8 @@
     <ProjectReference Include="../Business.Translations.FrontEnd/Business.Translations.FrontEnd.csproj" PrivateAssets="All" />
   </ItemGroup>
 
-  <!-- Embeds the FrontEnd dashboard into the assembly so the NuGet package ships it. -->
-  <Target Name="BuildDashboard" BeforeTargets="PrepareForBuild" Condition="'$(BuildDashboardExecuted)' != 'true'">
-    <Exec Command="pnpm run build" WorkingDirectory="$(MSBuildThisFileDirectory)../Business.Translations.FrontEnd" />
+  <!-- Embeds the FrontEnd dashboard (built by FrontEnd's BuildFrontend target) into the assembly so the NuGet package ships it. -->
+  <Target Name="BuildDashboard" AfterTargets="ResolveProjectReferences" Condition="'$(BuildDashboardExecuted)' != 'true'">
     <ItemGroup>
       <EmbeddedResource Include="..\Business.Translations.FrontEnd\dist\**\*" KeepDuplicates="false" />
     </ItemGroup>
