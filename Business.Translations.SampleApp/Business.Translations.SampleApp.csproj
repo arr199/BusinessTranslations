@@ -9,6 +9,6 @@
     <ProjectReference Include="../Business.Translations.API/Business.Translations.API.csproj" />
     <!-- Uncomment The line below to test the API as a nuget package. Comment the line above -->
     <!-- <PackageReference Include="BusinessTranslations" Version="1.0.0" /> -->
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
   </ItemGroup>
 </Project>

@@ -22,10 +22,7 @@
 
   <ItemGroup>
     <FrameWorkReference Include="Microsoft.AspNetCore.App" />
-    <ProjectReference
-      Include="../Business.Translations.FrontEnd/Business.Translations.FrontEnd.csproj"
-      PrivateAssets="All"
-    />
+    <ProjectReference Include="../Business.Translations.FrontEnd/Business.Translations.FrontEnd.csproj" PrivateAssets="All" />
   </ItemGroup>
 
   <!-- Embeds the FrontEnd dashboard into the assembly so the NuGet package ships it. -->
@@ -44,6 +41,6 @@
 
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="12.1.1" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.3" />
   </ItemGroup>
 </Project>

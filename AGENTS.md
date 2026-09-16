@@ -23,7 +23,7 @@ app.UseBusinessTranslations(config =>
 | `Business.Translations.SampleApp/` | Minimal API host mimicking a real app install (ProjectReference to the API project, not the NuGet package); binds `http://localhost:5100` |
 | `Business.Translations.UnitTests/` | xUnit + FluentAssertions + NSubstitute |
 | `Business.Translations.IntegrationTests/` | xUnit + `Microsoft.AspNetCore.Mvc.Testing` + `Testcontainers.MsSql` (needs Docker) |
-| `Business.Translations.E2E/` | Playwright suite (`tests/*.spec.ts`, mocks API routes via `page.route`). **Not in the .sln** — a Node project run with pnpm |
+| `Business.Translations.E2ETests/` | Playwright suite (`tests/*.spec.ts`, mocks API routes via `page.route`). **Not in the .sln** — a Node project run with pnpm |
 
 ### Backend layout (`Business.Translations.API`)
 
@@ -51,7 +51,7 @@ The API csproj has a `ProjectReference` to the FrontEnd csproj; its `BuildDashbo
 - **Test-first, always.** Write the failing test BEFORE implementation (bug fixes include a regression test reproducing the bug). Suite placement:
   - Backend validation/config â†’ `Business.Translations.UnitTests`
   - Backend endpoints/data access â†’ `Business.Translations.IntegrationTests`
-  - Frontend UI behavior â†’ `Business.Translations.E2E` (mock API routes like `dashboard.spec.ts` does)
+  - Frontend UI behavior â†’ `Business.Translations.E2ETests` (mock API routes like `dashboard.spec.ts` does)
 - **Testing philosophy (behavior over implementation).** Favor integration/E2E tests over unit tests — a test must survive a refactor. Tests assert observable behavior of the real system (endpoints, data access, rendered UI), never implementation details. Never test mock behavior in place of app behavior; mocks are only acceptable at test boundaries (see "Tests" under "Git, Artifacts & Style"). Agents will write whatever tests you allow — these opinions are the guardrail.
 - **Review before done.** After completing a feature (not one-line fixes), run a code-review pass — dispatch a fresh code-review subagent to check the actual diff against the task requirements (via the `requesting-code-review` skill) — and address or explicitly flag every finding before reporting completion.
 - **Skills ship with the repo.** All agent skills (team skills + vendored [superpowers](https://github.com/obra/superpowers) workflow skills) live in `.opencode/skills/` and are auto-discovered by opencode for anyone who clones the project — see `.opencode/skills/README.md`. Update them by copying newer `SKILL.md` folders in and committing.
@@ -93,7 +93,7 @@ dotnet test                                   # unit + integration
 dotnet test Business.Translations.UnitTests   # fast, no Docker
 
 # E2E â€” mocks all API routes; needs Vite dev server on :5173
-cd Business.Translations.E2E && pnpm install && pnpm run test
+cd Business.Translations.E2ETests && pnpm install && pnpm run test
 
 # Frontend lint / dev server (Vite, http://localhost:5173/bt/dashboard/)
 cd Business.Translations.FrontEnd && pnpm run lint && pnpm run dev
@@ -134,7 +134,6 @@ Validation â†’ 400, not found â†’ 404, server errors â†’ 500. Res
 
 ## Known Gaps / Cleanup Backlog
 
-- `Business.Translations.SampleApp.csproj` uses `Microsoft.OpenApi` 2.0.0 (NU1903 high-severity advisory, dev-only).
 - No CI (`.github/` empty); frontend has no unit tests (E2E only).
 
 ## Roadmap
