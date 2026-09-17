@@ -2,6 +2,8 @@
 
 An ASP.NET package that provides a built-in UI dashboard and REST API for managing translations (i18n) in your application.
 
+![Translations dashboard](docs/images/dashboard.png)
+
 ## Quick Start
 
 ```bash

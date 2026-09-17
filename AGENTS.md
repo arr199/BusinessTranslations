@@ -32,7 +32,7 @@ app.UseBusinessTranslations(config =>
 - `features/translations/data/` â€” datasources (raw SQL via `Microsoft.Data.SqlClient`), models, `DatabaseSeeder`
 - `features/translations/presentation/` â€” `BusinessTranslationEndpointBuilder.cs` (all endpoint registrations), `entities/` (DTOs), `validators/`, `services/` (`ValidationService` static dispatch)
 
-The API csproj has a `ProjectReference` to the FrontEnd csproj; its `BuildDashboard` target runs `pnpm run build` (in the FrontEnd folder) and **embeds `dist/**` as resources in the API assembly** — this is how the NuGet package ships the dashboard. Serving uses `EmbeddedFileProvider` (a physical `dist/` folder containing `index.html` next to the app binary wins as a dev override). The ProjectReference is `PrivateAssets="All"` so the FrontEnd never becomes a NuGet dependency. **Building the API requires pnpm/node.**
+The API csproj has a `ProjectReference` to the FrontEnd csproj. The FrontEnd's `BuildFrontend` target runs `pnpm run build` (the only pnpm invocation — never add another one; concurrent pnpm runs race on `node_modules`), and the API's `BuildDashboard` target (after `ResolveProjectReferences`) **embeds `dist/**` as resources in the API assembly** — this is how the NuGet package ships the dashboard. Serving uses `EmbeddedFileProvider` (a physical `dist/` folder containing `index.html` next to the app binary wins as a dev override). The ProjectReference is `PrivateAssets="All"` so the FrontEnd never becomes a NuGet dependency. **Building the API requires pnpm/node.**
 
 ## Git, Artifacts & Style
 
@@ -135,10 +135,12 @@ Validation â†’ 400, not found â†’ 404, server errors â†’ 500. Res
 - CSV export/import: `src/translations/data/datasource/csv-service.ts`.
 - `data/sample-data.ts` is dead code (nothing imports it).
 
-## Known Gaps / Cleanup Backlog
+## CI / Publishing
 
-- Frontend has no unit tests (E2E only).
+- `.github/workflows/ci.yml` — build + all tests on push/PR to `main` (backend job: build + unit/integration via Testcontainers; frontend job: lint + Playwright E2E with a Playwright-managed Vite server).
+- `.github/workflows/publish.yml` — triggered by `v*` tags: runs all tests, then `dotnet pack -c Release` and pushes `BusinessTranslations` to nuget.org. Requires the `NUGET_API_KEY` repo secret. Release flow (documented in `DEVELOPMENT.MD`): bump `<Version>` in the API csproj (source of truth), commit, push a matching `v*` tag — the workflow fails if the tag and csproj version differ.
+- The local NuGet feed folder `local-packages-source/` exists only for local package-consumption testing; it must exist (`.gitkeep` is committed) because the root `nuget.config` declares it as a source.
 
 ## Roadmap
 
-See `TODO.md`: more DB providers (SQLite, PostgreSQL, MongoDB via the builder pattern), API versioning, security review (input validation, auth, SQL injection/XSS/CSRF).
+More DB providers (SQLite, PostgreSQL, MongoDB via the builder pattern), API versioning, security review (input validation, auth, SQL injection/XSS/CSRF).

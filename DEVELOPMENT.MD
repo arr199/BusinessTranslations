@@ -75,6 +75,32 @@ dotnet pack Business.Translations.API -c Release -o local-packages-source
 
 A plain `dotnet restore` in a consuming project (e.g. `Business.Translations.SampleApp`) then resolves the package from that folder. Remember: **every new build of the package needs a new version number** — NuGet never updates an already-cached version.
 
+## Releasing (publishing to nuget.org)
+
+The version lives in `<Version>` in `Business.Translations.API/Business.Translations.API.csproj` — that is the single source of truth. The git tag is just the trigger and must match it (the publish workflow enforces this and fails on mismatch).
+
+Publishing a new version:
+
+```bash
+# 1. Bump <Version> in Business.Translations.API.csproj (e.g. 1.0.0 -> 1.0.1)
+# 2. Commit the bump
+# 3. Tag and push — the tag must match the csproj version exactly
+git tag v1.0.1
+git push origin main --tags
+```
+
+What happens next (`.github/workflows/publish.yml`):
+
+1. The `v*` tag triggers the pipeline: backend build + unit/integration tests and frontend lint + E2E all run first
+2. Only if everything is green: `dotnet pack -c Release` (no DEBUG seeding, dashboard embedded) and `dotnet nuget push` to nuget.org, using the `NUGET_API_KEY` repository secret
+3. `--skip-duplicate` makes re-pushing the same version a no-op; nuget.org itself never accepts the same version twice, so a released version is immutable
+
+Notes:
+
+- The `NUGET_API_KEY` secret is created on nuget.org (API Keys → Push scope, glob `BusinessTranslations`) and added under GitHub → Settings → Secrets and variables → Actions.
+- Tags drive publishing; pushing to `main` alone only runs `ci.yml` (build + tests, no publish).
+- DEBUG-only behavior (the sample-data seeder) never ships: it is compiled out in Release.
+
 ## Docker
 
 Spin up a local SQL Server/MongoDB database:

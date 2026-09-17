@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <None Include="../README.MD" Pack="true" PackagePath="/" Link="README.MD" />
+    <None Include="../docs/images/dashboard.png" Pack="true" PackagePath="docs/images/" Link="docs/images/dashboard.png" />
   </ItemGroup>
 
   <ItemGroup>

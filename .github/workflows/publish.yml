@@ -1,0 +1,108 @@
+name: Publish
+
+on:
+  push:
+    tags: ["v*"]
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Build + .NET tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: "**/pnpm-lock.yaml"
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build (embeds dashboard)
+        run: dotnet build
+
+      - name: Unit + integration tests (Testcontainers)
+        run: dotnet test --no-build
+
+  frontend:
+    name: Lint + Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: "**/pnpm-lock.yaml"
+
+      - name: Install FrontEnd dependencies
+        run: pnpm -C Business.Translations.FrontEnd install
+
+      - name: Install E2E dependencies + chromium
+        run: pnpm -C Business.Translations.E2ETests install
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('Business.Translations.E2ETests/pnpm-lock.yaml') }}
+
+      - name: Lint
+        run: pnpm -C Business.Translations.FrontEnd run lint
+
+      - name: E2E tests (Playwright starts Vite)
+        run: pnpm -C Business.Translations.E2ETests run test
+
+  publish:
+    name: Pack + push to nuget.org
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Verify tag matches package version
+        run: |
+          CSVER=$(grep -oPm1 '(?<=<Version>)[^<]+' Business.Translations.API/Business.Translations.API.csproj)
+          TAG="${GITHUB_REF_NAME#v}"
+          echo "csproj version: $CSVER — tag: v$TAG"
+          if [ "$CSVER" != "$TAG" ]; then
+            echo "::error::Tag 'v$TAG' does not match package version '$CSVER'. Bump <Version> in Business.Translations.API.csproj and re-tag."
+            exit 1
+          fi
+
+      - name: Pack (Release)
+        run: dotnet pack Business.Translations.API/Business.Translations.API.csproj -c Release --nologo
+
+      - name: Push to nuget.org
+        run: dotnet nuget push "Business.Translations.API/bin/Release/BusinessTranslations.*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

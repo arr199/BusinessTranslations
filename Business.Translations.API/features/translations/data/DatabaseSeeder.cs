@@ -14,31 +14,32 @@ public static class DatabaseSeeder
         await connection.OpenAsync(cancellationToken);
 
         Console.WriteLine("Seeding Database");
-        
-        // Minimal dummy seed (idempotent)
+
+        // Minimal dummy seed (idempotent; guards match slug/code OR name so user
+        // data with the same names but different slugs/codes never collides)
         const string sql =
             @"
-IF NOT EXISTS (SELECT 1 FROM BTLanguages WHERE Code = N'en')
+IF NOT EXISTS (SELECT 1 FROM BTLanguages WHERE Code = N'en' OR Name = N'English')
     INSERT INTO BTLanguages (Code, Name, IsActive) VALUES (N'en', N'English', 1);
-IF NOT EXISTS (SELECT 1 FROM BTLanguages WHERE Code = N'es')
+IF NOT EXISTS (SELECT 1 FROM BTLanguages WHERE Code = N'es' OR Name = N'Spanish')
     INSERT INTO BTLanguages (Code, Name, IsActive) VALUES (N'es', N'Spanish', 1);
-IF NOT EXISTS (SELECT 1 FROM BTLanguages WHERE Code = N'fr')
+IF NOT EXISTS (SELECT 1 FROM BTLanguages WHERE Code = N'fr' OR Name = N'French')
     INSERT INTO BTLanguages (Code, Name, IsActive) VALUES (N'fr', N'French', 1);
 
-IF NOT EXISTS (SELECT 1 FROM BTModules WHERE Slug = N'common')
+IF NOT EXISTS (SELECT 1 FROM BTModules WHERE Slug = N'common' OR Name = N'Common')
     INSERT INTO BTModules (Name, Slug, Icon, Description)
     VALUES (N'Common', N'common', N'globe', N'Common/shared UI strings');
 
-IF NOT EXISTS (SELECT 1 FROM BTModules WHERE Slug = N'auth')
+IF NOT EXISTS (SELECT 1 FROM BTModules WHERE Slug = N'auth' OR Name = N'Authentication')
     INSERT INTO BTModules (Name, Slug, Icon, Description)
     VALUES (N'Authentication', N'auth', N'lock', N'Login/registration/identity strings');
 
-DECLARE @moduleCommonId INT = (SELECT TOP 1 Id FROM BTModules WHERE Slug = N'common');
-DECLARE @moduleAuthId   INT = (SELECT TOP 1 Id FROM BTModules WHERE Slug = N'auth');
+DECLARE @moduleCommonId INT = (SELECT TOP 1 Id FROM BTModules WHERE Slug = N'common' OR Name = N'Common' ORDER BY Id);
+DECLARE @moduleAuthId   INT = (SELECT TOP 1 Id FROM BTModules WHERE Slug = N'auth' OR Name = N'Authentication' ORDER BY Id);
 
-DECLARE @langEnId INT = (SELECT TOP 1 Id FROM BTLanguages WHERE Code = N'en');
-DECLARE @langEsId INT = (SELECT TOP 1 Id FROM BTLanguages WHERE Code = N'es');
-DECLARE @langFrId INT = (SELECT TOP 1 Id FROM BTLanguages WHERE Code = N'fr');
+DECLARE @langEnId INT = (SELECT TOP 1 Id FROM BTLanguages WHERE Code = N'en' OR Name = N'English' ORDER BY Id);
+DECLARE @langEsId INT = (SELECT TOP 1 Id FROM BTLanguages WHERE Code = N'es' OR Name = N'Spanish' ORDER BY Id);
+DECLARE @langFrId INT = (SELECT TOP 1 Id FROM BTLanguages WHERE Code = N'fr' OR Name = N'French' ORDER BY Id);
 
 IF NOT EXISTS (SELECT 1 FROM BTTranslations WHERE ModuleId = @moduleCommonId AND KeyName = N'app.title' AND LanguageId = @langEnId)
     INSERT INTO BTTranslations (ModuleId, KeyName, LanguageId, Value, Status)
