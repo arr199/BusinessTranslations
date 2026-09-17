@@ -101,8 +101,14 @@ jobs:
             exit 1
           fi
 
+      - name: Restore
+        run: dotnet restore Business.Translations.API/Business.Translations.API.csproj
+
+      - name: Build (Release)
+        run: dotnet build Business.Translations.API/Business.Translations.API.csproj -c Release --no-restore --nologo
+
       - name: Pack (Release)
-        run: dotnet pack Business.Translations.API/Business.Translations.API.csproj -c Release --nologo
+        run: dotnet pack Business.Translations.API/Business.Translations.API.csproj -c Release --no-build --no-restore --nologo
 
       - name: Push to nuget.org
         run: dotnet nuget push "Business.Translations.API/bin/Release/BusinessTranslations.*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

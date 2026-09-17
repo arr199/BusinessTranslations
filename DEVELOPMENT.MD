@@ -98,6 +98,7 @@ What happens next (`.github/workflows/publish.yml`):
 Notes:
 
 - The `NUGET_API_KEY` secret is created on nuget.org (API Keys → Push scope, glob `BusinessTranslations`) and added under GitHub → Settings → Secrets and variables → Actions.
+- **nuget.org API keys expire** (30 days unless a different duration is chosen at creation). If a publish suddenly fails with 401/403 (or `Response status code does not indicate success: 401`), the key most likely expired: create a new one on nuget.org and update the `NUGET_API_KEY` secret in GitHub. Regenerating the key does not affect anything else — no code or version changes are needed.
 - Tags drive publishing; pushing to `main` alone only runs `ci.yml` (build + tests, no publish).
 - DEBUG-only behavior (the sample-data seeder) never ships: it is compiled out in Release.
 

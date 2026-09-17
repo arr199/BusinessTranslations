@@ -18,7 +18,7 @@ app.UseBusinessTranslations(config =>
 
 | Project                                   | Purpose                                                                                                                                   |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `Business.Translations.API/`              | The NuGet package (PackageId: `BusinessTranslations`, net10.0, generates package on build)                                                |
+| `Business.Translations.API/`              | The NuGet package (PackageId: `BusinessTranslations`, net10.0; package is created via `dotnet pack`, not on build)                        |
 | `Business.Translations.FrontEnd/`         | React 19 + Vite + Tailwind 4 + Zustand dashboard SPA; `dist/` is embedded into the package at build time                                  |
 | `Business.Translations.SampleApp/`        | Minimal API host mimicking a real app install (ProjectReference to the API project, not the NuGet package); binds `http://localhost:5100` |
 | `Business.Translations.UnitTests/`        | xUnit + FluentAssertions + NSubstitute                                                                                                    |
@@ -138,7 +138,7 @@ Validation â†’ 400, not found â†’ 404, server errors â†’ 500. Res
 ## CI / Publishing
 
 - `.github/workflows/ci.yml` — build + all tests on push/PR to `main` (backend job: build + unit/integration via Testcontainers; frontend job: lint + Playwright E2E with a Playwright-managed Vite server).
-- `.github/workflows/publish.yml` — triggered by `v*` tags: runs all tests, then `dotnet pack -c Release` and pushes `BusinessTranslations` to nuget.org. Requires the `NUGET_API_KEY` repo secret. Release flow (documented in `DEVELOPMENT.MD`): bump `<Version>` in the API csproj (source of truth), commit, push a matching `v*` tag — the workflow fails if the tag and csproj version differ.
+- `.github/workflows/publish.yml` — triggered by `v*` tags: runs all tests, then `dotnet pack -c Release` and pushes `BusinessTranslations` to nuget.org. Requires the `NUGET_API_KEY` repo secret (nuget.org API keys expire — on 401/403 during publish, regenerate the key and update the secret). Release flow (documented in `DEVELOPMENT.MD`): bump `<Version>` in the API csproj (source of truth), commit, push a matching `v*` tag — the workflow fails if the tag and csproj version differ.
 - The local NuGet feed folder `local-packages-source/` exists only for local package-consumption testing; it must exist (`.gitkeep` is committed) because the root `nuget.config` declares it as a source.
 
 ## Roadmap
