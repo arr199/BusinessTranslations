@@ -6,15 +6,17 @@ namespace Business.Translations.IntegrationTests.Factories;
 
 public class TranslationsApiFactory : IAsyncLifetime
 {
-    private readonly MsSqlContainer _sqlContainer = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
-        .Build();
+    private readonly MsSqlContainer _sqlContainer = new MsSqlBuilder(
+        "mcr.microsoft.com/mssql/server:2022-latest"
+    ).Build();
 
     private WebApplication? _app;
     private HttpClient? _client;
 
-    public HttpClient Client => _client ?? throw new InvalidOperationException("Factory not initialized");
+    public HttpClient Client =>
+        _client ?? throw new InvalidOperationException("Factory not initialized");
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _sqlContainer.StartAsync();
 
@@ -35,7 +37,7 @@ public class TranslationsApiFactory : IAsyncLifetime
         _client = new HttpClient { BaseAddress = new Uri(address) };
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         _client?.Dispose();
         if (_app is not null)

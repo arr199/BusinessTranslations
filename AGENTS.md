@@ -16,14 +16,14 @@ app.UseBusinessTranslations(config =>
 
 ## Projects
 
-| Project | Purpose |
-| --- | --- |
-| `Business.Translations.API/` | The NuGet package (PackageId: `BusinessTranslations`, net10.0, generates package on build) |
-| `Business.Translations.FrontEnd/` | React 19 + Vite + Tailwind 4 + Zustand dashboard SPA; `dist/` is embedded into the package at build time |
-| `Business.Translations.SampleApp/` | Minimal API host mimicking a real app install (ProjectReference to the API project, not the NuGet package); binds `http://localhost:5100` |
-| `Business.Translations.UnitTests/` | xUnit + FluentAssertions + NSubstitute |
-| `Business.Translations.IntegrationTests/` | xUnit + `Microsoft.AspNetCore.Mvc.Testing` + `Testcontainers.MsSql` (needs Docker) |
-| `Business.Translations.E2ETests/` | Playwright suite (`tests/*.spec.ts`, mocks API routes via `page.route`). **Not in the .sln** — a Node project run with pnpm |
+| Project                                   | Purpose                                                                                                                                   |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `Business.Translations.API/`              | The NuGet package (PackageId: `BusinessTranslations`, net10.0, generates package on build)                                                |
+| `Business.Translations.FrontEnd/`         | React 19 + Vite + Tailwind 4 + Zustand dashboard SPA; `dist/` is embedded into the package at build time                                  |
+| `Business.Translations.SampleApp/`        | Minimal API host mimicking a real app install (ProjectReference to the API project, not the NuGet package); binds `http://localhost:5100` |
+| `Business.Translations.UnitTests/`        | xUnit + FluentAssertions + NSubstitute                                                                                                    |
+| `Business.Translations.IntegrationTests/` | xUnit + `Microsoft.AspNetCore.Mvc.Testing` + `Testcontainers.MsSql` (needs Docker)                                                        |
+| `Business.Translations.E2ETests/`         | Playwright suite (`tests/*.spec.ts`, mocks API routes via `page.route`). **Not in the .sln** — a Node project run with pnpm               |
 
 ### Backend layout (`Business.Translations.API`)
 
@@ -88,12 +88,15 @@ dotnet run --project Business.Translations.SampleApp
 # Build solution / NuGet package
 dotnet build
 
-# Tests â€” integration needs Docker running
-dotnet test                                   # unit + integration
-dotnet test Business.Translations.UnitTests   # fast, no Docker
+# Tests — integration needs Docker running; MTP mode via global.json
+dotnet test                                            # unit + integration
+dotnet test --project Business.Translations.UnitTests  # fast, no Docker
 
-# E2E â€” mocks all API routes; needs Vite dev server on :5173
+# E2E â€” mocks all API routes; Playwright starts Vite itself (reuseExistingServer)
 cd Business.Translations.E2ETests && pnpm install && pnpm run test
+
+# All suites in one go (bash; dotnet tests + Playwright E2E)
+bash scripts/run-tests.sh
 
 # Frontend lint / dev server (Vite, http://localhost:5173/bt/dashboard/)
 cd Business.Translations.FrontEnd && pnpm run lint && pnpm run dev
@@ -111,18 +114,18 @@ cd Business.Translations.FrontEnd && pnpm run lint && pnpm run dev
 
 ## API Endpoints (all under /{basePath}, default /bt)
 
-| Method | Path | Notes |
-| --- | --- | --- |
-| GET | `/bt/dashboard` | React SPA |
-| POST | `/bt/createTables` | Creates tables, idempotent |
-| GET/POST | `/bt/translations` | List: `?moduleId=&languageId=&keywords=&limit=&offset=` |
-| POST | `/bt/translations/bulk` | CSV-import upsert: body `{ rows: [{ module, keyName, languageCode, value }] }`, max 10000; returns `{ created, updated, skipped[], failed[] }` |
-| DELETE | `/bt/translations` | Bulk delete, body `{ ids: number[] }` |
-| PUT/DELETE | `/bt/translations/{id}` | |
-| GET/POST | `/bt/modules` | |
-| PUT/DELETE | `/bt/modules/{id}` | |
-| GET/POST | `/bt/languages` | |
-| PUT/DELETE | `/bt/languages/{id}` | |
+| Method     | Path                    | Notes                                                                                                                                          |
+| ---------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET        | `/bt/dashboard`         | React SPA                                                                                                                                      |
+| POST       | `/bt/createTables`      | Creates tables, idempotent                                                                                                                     |
+| GET/POST   | `/bt/translations`      | List: `?moduleId=&languageId=&keywords=&limit=&offset=`                                                                                        |
+| POST       | `/bt/translations/bulk` | CSV-import upsert: body `{ rows: [{ module, keyName, languageCode, value }] }`, max 10000; returns `{ created, updated, skipped[], failed[] }` |
+| DELETE     | `/bt/translations`      | Bulk delete, body `{ ids: number[] }`                                                                                                          |
+| PUT/DELETE | `/bt/translations/{id}` |                                                                                                                                                |
+| GET/POST   | `/bt/modules`           |                                                                                                                                                |
+| PUT/DELETE | `/bt/modules/{id}`      |                                                                                                                                                |
+| GET/POST   | `/bt/languages`         |                                                                                                                                                |
+| PUT/DELETE | `/bt/languages/{id}`    |                                                                                                                                                |
 
 Validation â†’ 400, not found â†’ 404, server errors â†’ 500. Responses use an `ApiResponse` shape (`success`, `message`, optionally `data`/`error`).
 
@@ -134,7 +137,7 @@ Validation â†’ 400, not found â†’ 404, server errors â†’ 500. Res
 
 ## Known Gaps / Cleanup Backlog
 
-- No CI (`.github/` empty); frontend has no unit tests (E2E only).
+- Frontend has no unit tests (E2E only).
 
 ## Roadmap
 

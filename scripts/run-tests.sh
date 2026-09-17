@@ -18,7 +18,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "── .NET tests (unit + integration) ──"
-dotnet test "$ROOT_DIR"
+dotnet test --solution "$ROOT_DIR/businessTranslations.sln"
 
 echo "── Playwright E2E ──"
 cd "$ROOT_DIR/Business.Translations.E2ETests"
